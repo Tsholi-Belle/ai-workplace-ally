@@ -6,7 +6,7 @@ import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 const TaskKind = z.enum(["meeting-notes", "task-planner", "research"]);
 
 const SYSTEM_PROMPTS: Record<z.infer<typeof TaskKind>, string> = {
-  "meeting-notes": `You are a meticulous meeting notes summarizer for busy professionals.
+  "meeting-notes": `You are a meticulous meeting notes summariser for busy professionals.
 Given raw meeting notes or a transcript, produce a clean, structured summary in Markdown with:
 ## Summary — 2-3 sentence executive overview
 ## Key Decisions — bullet list

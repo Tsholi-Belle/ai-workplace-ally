@@ -6,7 +6,7 @@ import { AiWorkspace } from "@/components/ai-workspace";
 export const Route = createFileRoute("/meeting-notes")({
   head: () => ({
     meta: [
-      { title: "Meeting Notes Summarizer — Workplace Ally" },
+      { title: "Meeting Notes Summariser — Workplace Ally" },
       { name: "description", content: "Turn raw meeting notes into clean summaries with action items." },
     ],
   }),
@@ -17,7 +17,7 @@ function MeetingNotesPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader
-        title="Meeting Notes Summarizer"
+        title="Meeting Notes Summariser"
         description="Paste raw meeting notes or a transcript. AI returns a clean summary with decisions, action items, and follow-ups."
         icon={<FileText className="h-5 w-5" />}
       />
@@ -25,7 +25,7 @@ function MeetingNotesPage() {
         kind="meeting-notes"
         inputLabel="Raw notes or transcript"
         inputPlaceholder="Paste your meeting notes or transcript here…"
-        ctaLabel="Summarize"
+        ctaLabel="Summarise"
         examples={[
           {
             label: "Sample standup",

@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
 
 const features = [
   {
-    title: "Meeting Notes Summarizer",
+    title: "Meeting Notes Summariser",
     description: "Turn raw notes or transcripts into clean summaries with decisions and action items.",
     icon: FileText,
     url: "/meeting-notes",
@@ -53,7 +53,7 @@ function Dashboard() {
             </span>
           </h1>
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
-            A modern AI workspace for professionals — summarize meetings, plan your week, and
+            A modern AI workspace for professionals — summarise meetings, plan your week, and
             research topics. All in one place.
           </p>
         </div>
