@@ -78,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "AI-powered workplace assistant: summarize meetings, plan tasks, do research, and chat with an AI helper.",
+          "AI-powered workplace assistant: summarize meetings, plan tasks, and do research.",
       },
       { property: "og:title", content: "Workplace Ally" },
       {
