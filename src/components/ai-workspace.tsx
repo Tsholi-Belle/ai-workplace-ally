@@ -60,7 +60,7 @@ export function AiWorkspace({ kind, inputLabel, inputPlaceholder, examples, ctaL
       <Card className="shadow-card">
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">{inputLabel}</CardTitle>
-          <MicButton onAppend={(chunk) => setInput((input ? input + " " : "") + chunk)} />
+          <MicButton onAppend={(chunk) => setInput((prev) => (prev ? prev + " " : "") + chunk)} />
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
