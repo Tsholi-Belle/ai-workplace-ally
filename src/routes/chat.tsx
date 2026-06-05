@@ -27,7 +27,7 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 export const Route = createFileRoute("/chat")({
   head: () => ({
     meta: [
-      { title: "AI Chatbot — Workplace AI" },
+      { title: "AI Chatbot — Workplace Ally" },
       { name: "description", content: "Chat with your AI workplace assistant." },
     ],
   }),
