@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, ListChecks, Search, MessageSquare, ArrowRight, Sparkles } from "lucide-react";
+import { FileText, ListChecks, Search, ArrowRight, Sparkles } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiDisclaimer } from "@/components/ai-disclaimer";
 
@@ -32,12 +32,6 @@ const features = [
     icon: Search,
     url: "/research",
   },
-  {
-    title: "AI Chatbot",
-    description: "Conversational helper for drafting, brainstorming, and quick workplace answers.",
-    icon: MessageSquare,
-    url: "/chat",
-  },
 ] as const;
 
 function Dashboard() {
@@ -59,8 +53,8 @@ function Dashboard() {
             </span>
           </h1>
           <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
-            A modern AI workspace for professionals — summarize meetings, plan your week, research
-            topics, and chat with an AI assistant. All in one place.
+            A modern AI workspace for professionals — summarize meetings, plan your week, and
+            research topics. All in one place.
           </p>
         </div>
       </section>
