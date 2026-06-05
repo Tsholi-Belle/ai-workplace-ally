@@ -6,7 +6,7 @@ import { AiWorkspace } from "@/components/ai-workspace";
 export const Route = createFileRoute("/meeting-notes")({
   head: () => ({
     meta: [
-      { title: "Meeting Notes Summarizer — Workplace AI" },
+      { title: "Meeting Notes Summarizer — Workplace Ally" },
       { name: "description", content: "Turn raw meeting notes into clean summaries with action items." },
     ],
   }),

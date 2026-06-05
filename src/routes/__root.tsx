@@ -74,13 +74,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Workplace Productivity Assistant" },
+      { title: "Workplace Ally" },
       {
         name: "description",
         content:
           "AI-powered workplace assistant: summarize meetings, plan tasks, do research, and chat with an AI helper.",
       },
-      { property: "og:title", content: "Workplace Productivity Assistant" },
+      { property: "og:title", content: "Workplace Ally" },
       {
         property: "og:description",
         content: "AI-powered workplace assistant for busy professionals.",
@@ -135,7 +135,7 @@ function RootComponent() {
           <div className="flex flex-1 flex-col">
             <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur">
               <SidebarTrigger />
-              <div className="text-sm text-muted-foreground">Workplace Productivity Assistant</div>
+              <div className="text-sm text-muted-foreground">Workplace Ally</div>
             </header>
             <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
               <Outlet />

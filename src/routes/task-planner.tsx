@@ -6,7 +6,7 @@ import { AiWorkspace } from "@/components/ai-workspace";
 export const Route = createFileRoute("/task-planner")({
   head: () => ({
     meta: [
-      { title: "AI Task Planner — Workplace AI" },
+      { title: "AI Task Planner — Workplace Ally" },
       { name: "description", content: "Turn goals into prioritized plans with time blocks." },
     ],
   }),

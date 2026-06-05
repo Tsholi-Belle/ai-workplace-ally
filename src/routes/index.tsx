@@ -6,7 +6,7 @@ import { AiDisclaimer } from "@/components/ai-disclaimer";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Workplace Productivity Assistant" },
+      { title: "Dashboard — Workplace Ally" },
       { name: "description", content: "Your AI-powered workplace command center." },
     ],
   }),
