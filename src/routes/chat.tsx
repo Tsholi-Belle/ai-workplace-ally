@@ -69,13 +69,13 @@ function ChatPage() {
 
   const isLoading = status === "submitted" || status === "streaming";
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input.trim();
+  const handleSubmit = (message: { text?: string }) => {
+    const text = (message.text ?? input).trim();
     if (!text || isLoading) return;
     sendMessage({ text });
     setInput("");
   };
+
 
   const handleClear = () => {
     setMessages([]);
