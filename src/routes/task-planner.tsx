@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ListChecks } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { AiWorkspace } from "@/components/ai-workspace";
+import { TaskManager } from "@/components/task-manager";
 
 export const Route = createFileRoute("/task-planner")({
   head: () => ({
@@ -15,12 +16,15 @@ export const Route = createFileRoute("/task-planner")({
 
 function TaskPlannerPage() {
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-6xl space-y-8">
       <PageHeader
         title="AI Task Planner"
-        description="Describe your goal or paste a list of tasks. AI returns a prioritized action plan with a recommended schedule."
+        description="Add tasks, organise by category, and let AI turn your goals into a prioritized action plan."
         icon={<ListChecks className="h-5 w-5" />}
       />
+
+      <TaskManager />
+
       <AiWorkspace
         kind="task-planner"
         inputLabel="Goal or task list"
