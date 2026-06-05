@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiDisclaimer } from "@/components/ai-disclaimer";
+import { MicButton } from "@/components/mic-button";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { runAiTask } from "@/lib/ai.functions";
 
@@ -57,8 +58,9 @@ export function AiWorkspace({ kind, inputLabel, inputPlaceholder, examples, ctaL
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card className="shadow-card">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-base">{inputLabel}</CardTitle>
+          <MicButton onAppend={(chunk) => setInput((input ? input + " " : "") + chunk)} />
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
@@ -67,6 +69,7 @@ export function AiWorkspace({ kind, inputLabel, inputPlaceholder, examples, ctaL
             placeholder={inputPlaceholder}
             className="min-h-[280px] resize-y font-sans text-sm leading-relaxed"
           />
+
 
           {examples && examples.length > 0 && (
             <div className="flex flex-wrap gap-2">
