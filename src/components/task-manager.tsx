@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { MicButton } from "@/components/mic-button";
 import { cn } from "@/lib/utils";
 
 type Task = {
@@ -110,11 +111,11 @@ export function TaskManager() {
       </div>
 
       {/* Add task */}
-      <div className="grid gap-2 sm:grid-cols-[1fr_180px_auto]">
+      <div className="grid gap-2 sm:grid-cols-[1fr_160px_auto_auto]">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Add a new task…"
+          placeholder="Add a new task… or click the mic"
           onKeyDown={(e) => e.key === "Enter" && addTask()}
         />
         <Select value={category} onValueChange={setCategory}>
@@ -129,6 +130,7 @@ export function TaskManager() {
             ))}
           </SelectContent>
         </Select>
+        <MicButton onAppend={(chunk) => setTitle((t) => (t ? t + " " : "") + chunk)} />
         <Button onClick={addTask}>
           <Plus className="h-4 w-4 mr-1" /> Add
         </Button>
