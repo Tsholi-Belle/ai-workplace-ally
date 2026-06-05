@@ -8,7 +8,7 @@ Workplace Ally is a modern, responsive web application designed to help professi
 
 **Modern Dashboard UI:** A clean, dark-themed interface featuring structured card grids and a responsive sidebar navigation system for seamless contextual switching.
 
-**Meeting Notes Summarizer: ** Converts raw meeting notes or unstructured transcripts into polished executive summaries, key decisions, and actionable items.
+**Meeting Notes Summeriser:** Converts raw meeting notes or unstructured transcripts into polished executive summaries, key decisions, and actionable items.
 
 **AI Task Planner:** Transforms broad objectives into prioritized daily plans with time-blocking capabilities, categorical organization, and completion tracking.
 
