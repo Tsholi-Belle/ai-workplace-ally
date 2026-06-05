@@ -54,7 +54,7 @@ function Dashboard() {
           <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
             Automate the busywork.
             <br />
-            <span className="bg-gradient-to-r from-primary-glow to-primary bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary-glow to-primary bg-clip-text text-green-400">
               Focus on the work that matters.
             </span>
           </h1>
