@@ -111,7 +111,7 @@ export function TaskManager() {
       </div>
 
       {/* Add task */}
-      <div className="grid gap-2 sm:grid-cols-[1fr_160px_auto_auto]">
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-[1fr_160px_auto_auto]">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -130,11 +130,14 @@ export function TaskManager() {
             ))}
           </SelectContent>
         </Select>
-        <MicButton onAppend={(chunk) => setTitle((t) => (t ? t + " " : "") + chunk)} />
-        <Button onClick={addTask}>
-          <Plus className="h-4 w-4 mr-1" /> Add
-        </Button>
+        <div className="flex gap-2 sm:contents">
+          <MicButton onAppend={(chunk) => setTitle((t) => (t ? t + " " : "") + chunk)} />
+          <Button onClick={addTask} className="flex-1 sm:flex-none">
+            <Plus className="h-4 w-4 mr-1" /> Add
+          </Button>
+        </div>
       </div>
+
 
       {/* Categories */}
       <div className="flex flex-wrap items-center gap-2">
