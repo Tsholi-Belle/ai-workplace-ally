@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, Plus, Trash2, Tag, Users, X } from "lucide-react";
+import { AlertCircle, Calendar, Check, Plus, Tag, Trash2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
