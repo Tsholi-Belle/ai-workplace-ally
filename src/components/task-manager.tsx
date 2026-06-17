@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check, Plus, Trash2, Tag, Users, X } from "lucide-react";
+import { AlertCircle, Calendar, Check, Plus, Tag, Trash2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,8 +20,38 @@ type Task = {
   title: string;
   category: string;
   assignee: string | null;
+  dueDate?: string | null;
   done: boolean;
   createdAt: number;
+};
+
+const startOfToday = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+};
+
+const parseDueDate = (s: string | null) => {
+  if (!s) return null;
+  const [y, m, d] = s.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d).getTime();
+};
+
+const dueStatus = (s: string | null) => {
+  const ts = parseDueDate(s);
+  if (ts == null) return { label: null as string | null, overdue: false, soon: false };
+  const today = startOfToday();
+  const diffDays = Math.round((ts - today) / 86400000);
+  if (diffDays < 0) return { label: `${Math.abs(diffDays)}d overdue`, overdue: true, soon: false };
+  if (diffDays === 0) return { label: "Due today", overdue: false, soon: true };
+  if (diffDays === 1) return { label: "Due tomorrow", overdue: false, soon: true };
+  if (diffDays <= 7) return { label: `In ${diffDays}d`, overdue: false, soon: true };
+  return {
+    label: new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+    overdue: false,
+    soon: false,
+  };
 };
 
 const DEFAULT_CATEGORIES = ["Work", "Personal", "Urgent", "Ideas"];
@@ -52,6 +82,7 @@ export function TaskManager() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(categories[0] ?? "Work");
   const [assignee, setAssignee] = useState<string>(UNASSIGNED);
+  const [dueDate, setDueDate] = useState<string>("");
   const [newCategory, setNewCategory] = useState("");
   const [newMember, setNewMember] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
@@ -67,12 +98,14 @@ export function TaskManager() {
         title: t,
         category,
         assignee: assignee === UNASSIGNED ? null : assignee,
+        dueDate: dueDate || null,
         done: false,
         createdAt: Date.now(),
       },
       ...tasks,
     ]);
     setTitle("");
+    setDueDate("");
   };
 
   const toggle = (id: string) =>
@@ -87,6 +120,11 @@ export function TaskManager() {
           ? { ...t, assignee: value === UNASSIGNED ? null : value }
           : t,
       ),
+    );
+
+  const setDue = (id: string, value: string) =>
+    setTasks(
+      tasks.map((t) => (t.id === id ? { ...t, dueDate: value || null } : t)),
     );
 
   const addCategory = () => {
@@ -129,7 +167,10 @@ export function TaskManager() {
   const stats = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((t) => t.done).length;
-    return { total, done, active: total - done };
+    const overdue = tasks.filter(
+      (t) => !t.done && dueStatus(t.dueDate ?? null).overdue,
+    ).length;
+    return { total, done, active: total - done, overdue };
   }, [tasks]);
 
   return (
@@ -139,6 +180,12 @@ export function TaskManager() {
           <h3 className="text-lg font-semibold">Your tasks</h3>
           <p className="text-sm text-muted-foreground">
             {stats.active} active · {stats.done} completed · {stats.total} total
+            {stats.overdue > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 text-destructive">
+                <AlertCircle className="h-3.5 w-3.5" />
+                {stats.overdue} overdue
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-1 rounded-md border border-border p-1">
@@ -160,7 +207,7 @@ export function TaskManager() {
       </div>
 
       {/* Add task */}
-      <div className="grid gap-2 grid-cols-1 sm:grid-cols-[1fr_140px_160px_auto_auto]">
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-[1fr_140px_160px_150px_auto_auto]">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -192,6 +239,12 @@ export function TaskManager() {
             ))}
           </SelectContent>
         </Select>
+        <Input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          aria-label="Due date"
+        />
         <div className="flex gap-2 sm:contents">
           <MicButton onAppend={(chunk) => setTitle((t) => (t ? t + " " : "") + chunk)} />
           <Button onClick={addTask} className="flex-1 sm:flex-none">
@@ -313,12 +366,17 @@ export function TaskManager() {
             No tasks here yet. Add one above to get started.
           </li>
         )}
-        {filtered.map((t) => (
+        {filtered.map((t) => {
+          const due = dueStatus(t.dueDate ?? null);
+          const showOverdue = due.overdue && !t.done;
+          const showSoon = due.soon && !t.done;
+          return (
           <li
             key={t.id}
             className={cn(
               "flex items-center gap-3 rounded-lg border border-border bg-background/40 px-3 py-2.5 group transition-colors",
               t.done && "opacity-60",
+              showOverdue && "border-destructive/50 bg-destructive/5",
             )}
           >
             <Checkbox
@@ -334,6 +392,28 @@ export function TaskManager() {
             >
               {t.title}
             </span>
+            <label
+              className={cn(
+                "relative inline-flex items-center gap-1 h-7 rounded-md border border-dashed border-border px-2 text-xs cursor-pointer hover:bg-muted/50 transition-colors",
+                showOverdue &&
+                  "border-destructive/60 text-destructive bg-destructive/10 hover:bg-destructive/15",
+                showSoon && "border-amber-500/50 text-amber-500",
+              )}
+              aria-label="Due date"
+            >
+              {showOverdue ? (
+                <AlertCircle className="h-3.5 w-3.5" />
+              ) : (
+                <Calendar className="h-3.5 w-3.5" />
+              )}
+              <span>{due.label ?? "No due date"}</span>
+              <input
+                type="date"
+                value={t.dueDate ?? ""}
+                onChange={(e) => setDue(t.id, e.target.value)}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </label>
             <Select
               value={t.assignee ?? UNASSIGNED}
               onValueChange={(v) => reassign(t.id, v)}
@@ -374,7 +454,8 @@ export function TaskManager() {
             </button>
             {t.done && <Check className="h-4 w-4 text-green-400 sr-only" />}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );
