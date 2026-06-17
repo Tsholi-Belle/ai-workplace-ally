@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, ListChecks, Search, ArrowRight, Sparkles } from "lucide-react";
+import { FileText, ListChecks, Search, ArrowRight, Sparkles, Languages } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiDisclaimer } from "@/components/ai-disclaimer";
 
@@ -31,6 +31,12 @@ const features = [
     description: "Get balanced briefings with key points, perspectives, and open questions.",
     icon: Search,
     url: "/research",
+  },
+  {
+    title: "AI Translator",
+    description: "Translate text into 20+ languages with tone control and formatting preserved.",
+    icon: Languages,
+    url: "/translate",
   },
 ] as const;
 

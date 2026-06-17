@@ -55,3 +55,40 @@ export const runAiTask = createServerFn({ method: "POST" })
 
     return { text };
   });
+
+export const translateText = createServerFn({ method: "POST" })
+  .inputValidator(
+    z.object({
+      input: z.string().min(1).max(20000),
+      targetLanguage: z.string().min(2).max(60),
+      tone: z.enum(["faithful", "formal", "casual"]).default("faithful"),
+    }),
+  )
+  .handler(async ({ data }) => {
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Missing LOVABLE_API_KEY");
+
+    const toneLine =
+      data.tone === "formal"
+        ? "Use a formal, professional register."
+        : data.tone === "casual"
+          ? "Use a friendly, conversational register."
+          : "Match the tone and register of the source as closely as possible.";
+
+    const system = `You are a professional translator.
+Translate the user's text into ${data.targetLanguage}.
+${toneLine}
+Preserve meaning, names, numbers, code blocks, URLs, and Markdown formatting exactly.
+Do NOT add commentary, transliteration, or explanations.
+If the source is already in ${data.targetLanguage}, return it unchanged.
+Return ONLY the translated text.`;
+
+    const gateway = createLovableAiGatewayProvider(key);
+    const { text } = await generateText({
+      model: gateway("google/gemini-3-flash-preview"),
+      system,
+      prompt: data.input,
+    });
+
+    return { text };
+  });
