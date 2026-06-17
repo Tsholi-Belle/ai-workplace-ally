@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, ListChecks, Search, ArrowRight, Sparkles, Languages } from "lucide-react";
+import { FileText, ListChecks, Search, ArrowRight, Sparkles, Languages, Video } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiDisclaimer } from "@/components/ai-disclaimer";
 
@@ -14,6 +14,12 @@ export const Route = createFileRoute("/")({
 });
 
 const features = [
+  {
+    title: "Meetings",
+    description: "Join Zoom, Meet, or Teams in a click. Take live notes (typed or dictated) and get AI summaries.",
+    icon: Video,
+    url: "/meetings",
+  },
   {
     title: "Meeting Notes Summariser",
     description: "Turn raw notes or transcripts into clean summaries with decisions and action items.",
