@@ -82,6 +82,7 @@ export function TaskManager() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(categories[0] ?? "Work");
   const [assignee, setAssignee] = useState<string>(UNASSIGNED);
+  const [dueDate, setDueDate] = useState<string>("");
   const [newCategory, setNewCategory] = useState("");
   const [newMember, setNewMember] = useState("");
   const [filter, setFilter] = useState<Filter>("All");
@@ -97,12 +98,14 @@ export function TaskManager() {
         title: t,
         category,
         assignee: assignee === UNASSIGNED ? null : assignee,
+        dueDate: dueDate || null,
         done: false,
         createdAt: Date.now(),
       },
       ...tasks,
     ]);
     setTitle("");
+    setDueDate("");
   };
 
   const toggle = (id: string) =>
