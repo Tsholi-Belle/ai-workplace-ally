@@ -122,6 +122,11 @@ export function TaskManager() {
       ),
     );
 
+  const setDue = (id: string, value: string) =>
+    setTasks(
+      tasks.map((t) => (t.id === id ? { ...t, dueDate: value || null } : t)),
+    );
+
   const addCategory = () => {
     const c = newCategory.trim();
     if (!c || categories.includes(c)) return;
