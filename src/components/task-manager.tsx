@@ -366,12 +366,17 @@ export function TaskManager() {
             No tasks here yet. Add one above to get started.
           </li>
         )}
-        {filtered.map((t) => (
+        {filtered.map((t) => {
+          const due = dueStatus(t.dueDate ?? null);
+          const showOverdue = due.overdue && !t.done;
+          const showSoon = due.soon && !t.done;
+          return (
           <li
             key={t.id}
             className={cn(
               "flex items-center gap-3 rounded-lg border border-border bg-background/40 px-3 py-2.5 group transition-colors",
               t.done && "opacity-60",
+              showOverdue && "border-destructive/50 bg-destructive/5",
             )}
           >
             <Checkbox
@@ -387,6 +392,28 @@ export function TaskManager() {
             >
               {t.title}
             </span>
+            <label
+              className={cn(
+                "relative inline-flex items-center gap-1 h-7 rounded-md border border-dashed border-border px-2 text-xs cursor-pointer hover:bg-muted/50 transition-colors",
+                showOverdue &&
+                  "border-destructive/60 text-destructive bg-destructive/10 hover:bg-destructive/15",
+                showSoon && "border-amber-500/50 text-amber-500",
+              )}
+              aria-label="Due date"
+            >
+              {showOverdue ? (
+                <AlertCircle className="h-3.5 w-3.5" />
+              ) : (
+                <Calendar className="h-3.5 w-3.5" />
+              )}
+              <span>{due.label ?? "No due date"}</span>
+              <input
+                type="date"
+                value={t.dueDate ?? ""}
+                onChange={(e) => setDue(t.id, e.target.value)}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </label>
             <Select
               value={t.assignee ?? UNASSIGNED}
               onValueChange={(v) => reassign(t.id, v)}
