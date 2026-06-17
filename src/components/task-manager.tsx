@@ -180,6 +180,12 @@ export function TaskManager() {
           <h3 className="text-lg font-semibold">Your tasks</h3>
           <p className="text-sm text-muted-foreground">
             {stats.active} active · {stats.done} completed · {stats.total} total
+            {stats.overdue > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 text-destructive">
+                <AlertCircle className="h-3.5 w-3.5" />
+                {stats.overdue} overdue
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-1 rounded-md border border-border p-1">
