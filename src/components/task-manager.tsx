@@ -20,7 +20,7 @@ type Task = {
   title: string;
   category: string;
   assignee: string | null;
-  dueDate: string | null;
+  dueDate?: string | null;
   done: boolean;
   createdAt: number;
 };
