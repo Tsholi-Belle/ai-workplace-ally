@@ -207,7 +207,7 @@ export function TaskManager() {
       </div>
 
       {/* Add task */}
-      <div className="grid gap-2 grid-cols-1 sm:grid-cols-[1fr_140px_160px_auto_auto]">
+      <div className="grid gap-2 grid-cols-1 sm:grid-cols-[1fr_140px_160px_150px_auto_auto]">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -239,6 +239,12 @@ export function TaskManager() {
             ))}
           </SelectContent>
         </Select>
+        <Input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          aria-label="Due date"
+        />
         <div className="flex gap-2 sm:contents">
           <MicButton onAppend={(chunk) => setTitle((t) => (t ? t + " " : "") + chunk)} />
           <Button onClick={addTask} className="flex-1 sm:flex-none">
