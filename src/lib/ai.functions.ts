@@ -62,6 +62,10 @@ export const translateText = createServerFn({ method: "POST" })
       input: z.string().min(1).max(20000),
       targetLanguage: z.string().min(2).max(60),
       tone: z.enum(["faithful", "formal", "casual"]).default("faithful"),
+      formatting: z
+        .enum(["preserve", "plain", "polish"])
+        .default("preserve"),
+      glossary: z.string().max(2000).optional(),
     }),
   )
   .handler(async ({ data }) => {
@@ -75,13 +79,25 @@ export const translateText = createServerFn({ method: "POST" })
           ? "Use a friendly, conversational register."
           : "Match the tone and register of the source as closely as possible.";
 
+    const formattingLine =
+      data.formatting === "plain"
+        ? "Return plain text only. Strip Markdown, HTML, and code fences; keep paragraph breaks."
+        : data.formatting === "polish"
+          ? "Preserve structure (Markdown, lists, code blocks, URLs). You may lightly polish phrasing for clarity, but never add or omit information."
+          : "Preserve Markdown, lists, code blocks, URLs, line breaks, and whitespace exactly as in the source.";
+
+    const glossaryLine = data.glossary?.trim()
+      ? `\nGlossary (use these translations exactly):\n${data.glossary.trim()}`
+      : "";
+
     const system = `You are a professional translator.
 Translate the user's text into ${data.targetLanguage}.
 ${toneLine}
-Preserve meaning, names, numbers, code blocks, URLs, and Markdown formatting exactly.
+${formattingLine}
+Preserve meaning, names, and numbers.
 Do NOT add commentary, transliteration, or explanations.
 If the source is already in ${data.targetLanguage}, return it unchanged.
-Return ONLY the translated text.`;
+Return ONLY the translated text.${glossaryLine}`;
 
     const gateway = createLovableAiGatewayProvider(key);
     const { text } = await generateText({
