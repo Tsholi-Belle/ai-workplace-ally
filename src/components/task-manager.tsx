@@ -20,8 +20,38 @@ type Task = {
   title: string;
   category: string;
   assignee: string | null;
+  dueDate: string | null;
   done: boolean;
   createdAt: number;
+};
+
+const startOfToday = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+};
+
+const parseDueDate = (s: string | null) => {
+  if (!s) return null;
+  const [y, m, d] = s.split("-").map(Number);
+  if (!y || !m || !d) return null;
+  return new Date(y, m - 1, d).getTime();
+};
+
+const dueStatus = (s: string | null) => {
+  const ts = parseDueDate(s);
+  if (ts == null) return { label: null as string | null, overdue: false, soon: false };
+  const today = startOfToday();
+  const diffDays = Math.round((ts - today) / 86400000);
+  if (diffDays < 0) return { label: `${Math.abs(diffDays)}d overdue`, overdue: true, soon: false };
+  if (diffDays === 0) return { label: "Due today", overdue: false, soon: true };
+  if (diffDays === 1) return { label: "Due tomorrow", overdue: false, soon: true };
+  if (diffDays <= 7) return { label: `In ${diffDays}d`, overdue: false, soon: true };
+  return {
+    label: new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+    overdue: false,
+    soon: false,
+  };
 };
 
 const DEFAULT_CATEGORIES = ["Work", "Personal", "Urgent", "Ideas"];
