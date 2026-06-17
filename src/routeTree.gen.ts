@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TranslateRouteImport } from './routes/translate'
 import { Route as TaskPlannerRouteImport } from './routes/task-planner'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as MeetingNotesRouteImport } from './routes/meeting-notes'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TranslateRoute = TranslateRouteImport.update({
+  id: '/translate',
+  path: '/translate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TaskPlannerRoute = TaskPlannerRouteImport.update({
   id: '/task-planner',
   path: '/task-planner',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/meeting-notes': typeof MeetingNotesRoute
   '/research': typeof ResearchRoute
   '/task-planner': typeof TaskPlannerRoute
+  '/translate': typeof TranslateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/meeting-notes': typeof MeetingNotesRoute
   '/research': typeof ResearchRoute
   '/task-planner': typeof TaskPlannerRoute
+  '/translate': typeof TranslateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,25 @@ export interface FileRoutesById {
   '/meeting-notes': typeof MeetingNotesRoute
   '/research': typeof ResearchRoute
   '/task-planner': typeof TaskPlannerRoute
+  '/translate': typeof TranslateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/meeting-notes' | '/research' | '/task-planner'
+  fullPaths:
+    | '/'
+    | '/meeting-notes'
+    | '/research'
+    | '/task-planner'
+    | '/translate'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/meeting-notes' | '/research' | '/task-planner'
-  id: '__root__' | '/' | '/meeting-notes' | '/research' | '/task-planner'
+  to: '/' | '/meeting-notes' | '/research' | '/task-planner' | '/translate'
+  id:
+    | '__root__'
+    | '/'
+    | '/meeting-notes'
+    | '/research'
+    | '/task-planner'
+    | '/translate'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +87,18 @@ export interface RootRouteChildren {
   MeetingNotesRoute: typeof MeetingNotesRoute
   ResearchRoute: typeof ResearchRoute
   TaskPlannerRoute: typeof TaskPlannerRoute
+  TranslateRoute: typeof TranslateRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/translate': {
+      id: '/translate'
+      path: '/translate'
+      fullPath: '/translate'
+      preLoaderRoute: typeof TranslateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/task-planner': {
       id: '/task-planner'
       path: '/task-planner'
@@ -107,6 +135,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeetingNotesRoute: MeetingNotesRoute,
   ResearchRoute: ResearchRoute,
   TaskPlannerRoute: TaskPlannerRoute,
+  TranslateRoute: TranslateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
