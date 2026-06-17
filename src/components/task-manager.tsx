@@ -454,7 +454,8 @@ export function TaskManager() {
             </button>
             {t.done && <Check className="h-4 w-4 text-green-400 sr-only" />}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );
