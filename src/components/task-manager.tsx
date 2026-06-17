@@ -167,7 +167,10 @@ export function TaskManager() {
   const stats = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((t) => t.done).length;
-    return { total, done, active: total - done };
+    const overdue = tasks.filter(
+      (t) => !t.done && dueStatus(t.dueDate ?? null).overdue,
+    ).length;
+    return { total, done, active: total - done, overdue };
   }, [tasks]);
 
   return (
