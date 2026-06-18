@@ -187,19 +187,45 @@ export const summarizeMeetingNotes = createServerFn({ method: "POST" })
     z.object({
       title: z.string().max(200).optional(),
       notes: z.string().min(1).max(40000),
+      length: z.enum(["brief", "detailed"]).default("detailed"),
+      sections: z
+        .object({
+          decisions: z.boolean().default(true),
+          actionItems: z.boolean().default(true),
+          openQuestions: z.boolean().default(true),
+          followUps: z.boolean().default(true),
+        })
+        .default({ decisions: true, actionItems: true, openQuestions: true, followUps: true }),
     }),
   )
   .handler(async ({ data }) => {
     const key = requireKey("LOVABLE_API_KEY");
     const gateway = createLovableAiGatewayProvider(key);
+
+    const sectionLines: string[] = [];
+    sectionLines.push(
+      data.length === "brief"
+        ? "## Summary — 1-2 sentence executive overview"
+        : "## Summary — 3-5 sentence overview with the most important context",
+    );
+    if (data.sections.decisions) sectionLines.push("## Key Decisions — bullet list");
+    if (data.sections.actionItems)
+      sectionLines.push(`## Action Items — checklist as "- [ ] Owner — Task — Due"`);
+    if (data.sections.openQuestions) sectionLines.push("## Open Questions — bullet list");
+    if (data.sections.followUps) sectionLines.push("## Follow-ups — bullet list");
+
+    const lengthLine =
+      data.length === "brief"
+        ? "Keep the entire summary concise — prefer short bullets, no long paragraphs."
+        : "Be thorough but not verbose; include nuance where it matters.";
+
     const system = `You are a meticulous meeting notes summariser.
-Given raw meeting notes or a transcript, produce a clean Markdown summary with:
-## Summary — 2-3 sentence overview
-## Key Decisions — bullet list
-## Action Items — checklist as "- [ ] Owner — Task — Due"
-## Open Questions — bullet list
-## Follow-ups — bullet list
-Be faithful to the source. Do not invent attendees or commitments.`;
+Given raw meeting notes or a transcript, produce a clean Markdown summary with ONLY these sections, in this order:
+${sectionLines.join("\n")}
+
+${lengthLine}
+Be faithful to the source. Do not invent attendees, decisions, or commitments. Omit any section that has no real content rather than padding it.`;
+
     const prompt = data.title ? `Meeting: ${data.title}\n\n${data.notes}` : data.notes;
     const { text } = await generateText({
       model: gateway("google/gemini-3-flash-preview"),
