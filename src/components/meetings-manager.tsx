@@ -25,6 +25,11 @@ import {
   X,
   Check,
   Clock,
+  History,
+  GitCompare,
+  CalendarPlus,
+  Mail,
+  Inbox,
 } from "lucide-react";
 import { toast } from "sonner";
 
