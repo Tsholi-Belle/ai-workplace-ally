@@ -600,8 +600,12 @@ export function MeetingsManager() {
           enabled={reminderEnabled}
           minutes={reminderMinutes}
           permission={permission}
+          channel={deliveryChannel}
+          email={reminderEmail}
           onToggle={handleToggleReminders}
           onMinutesChange={setReminderMinutes}
+          onChannelChange={setDeliveryChannel}
+          onEmailChange={setReminderEmail}
         />
         <IcsImportDialog onImport={importIcsText} />
       </div>
