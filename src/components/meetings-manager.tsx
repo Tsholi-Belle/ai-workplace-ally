@@ -1050,6 +1050,29 @@ function MeetingDetail({
     summary: meeting.summary,
   };
 
+  const handleAddToCalendar = () => {
+    if (!meeting.startsAt) {
+      toast.error("Set a meeting time before exporting.");
+      return;
+    }
+    try {
+      const ics = buildIcsForMeeting({
+        uid: meeting.id,
+        title: meeting.title,
+        startsAt: meeting.startsAt,
+        durationMinutes: 30,
+        joinUrl: meeting.joinUrl,
+        description: meeting.notes,
+        attendees: meeting.attendees.map((a) => a.name),
+      });
+      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+      downloadBlob(blob, `${sanitizeFilename(meeting.title)}.ics`);
+      toast.success("Calendar invite downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't build invite");
+    }
+  };
+
   const opts = meeting.summaryOptions ?? DEFAULT_SUMMARY_OPTIONS;
   const setOpts = (patch: Partial<SummaryOptions>) =>
     onUpdate({ summaryOptions: { ...opts, ...patch } });
