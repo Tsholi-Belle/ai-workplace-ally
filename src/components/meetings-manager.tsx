@@ -1234,6 +1234,18 @@ function MeetingDetail({
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">AI Summary</CardTitle>
             <div className="flex gap-1">
+              {(meeting.summaryHistory?.length ?? 0) > 0 && (
+                <SummaryHistoryDialog
+                  current={meeting.summary}
+                  history={meeting.summaryHistory ?? []}
+                  onRestore={(entry) =>
+                    onUpdate({
+                      summary: entry.summary,
+                      summaryOptions: entry.options,
+                    })
+                  }
+                />
+              )}
               <Button variant="ghost" size="sm" onClick={handleCopySummary}>
                 <Copy className="mr-1 h-4 w-4" /> Copy
               </Button>
