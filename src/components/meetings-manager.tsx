@@ -25,6 +25,11 @@ import {
   X,
   Check,
   Clock,
+  History,
+  GitCompare,
+  CalendarPlus,
+  Mail,
+  Inbox,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -78,12 +83,15 @@ import {
   fetchFirefliesTranscripts,
   summarizeMeetingNotes,
 } from "@/lib/meetings.functions";
-import { parseIcs, detectJoinUrl } from "@/lib/ics";
+import { parseIcs, detectJoinUrl, buildIcsForMeeting } from "@/lib/ics";
 import {
   exportMarkdown,
   exportPdf,
+  downloadBlob,
+  sanitizeFilename,
   type ExportPayload,
 } from "@/lib/meeting-export";
+import { diffLines } from "@/lib/diff";
 
 type Platform = "zoom" | "meet" | "teams" | "webex" | "other";
 type Role = "owner" | "editor" | "viewer";
@@ -101,6 +109,12 @@ interface SummaryOptions {
   followUps: boolean;
 }
 
+interface SummaryHistoryEntry {
+  ts: number;
+  summary: string;
+  options: SummaryOptions;
+}
+
 interface Meeting {
   id: string;
   title: string;
@@ -113,6 +127,7 @@ interface Meeting {
   source: "manual" | "google" | "fireflies" | "ics";
   createdAt: number;
   summaryOptions?: SummaryOptions;
+  summaryHistory?: SummaryHistoryEntry[];
 }
 
 interface NotificationItem {
@@ -124,6 +139,8 @@ interface NotificationItem {
   read: boolean;
   kind: "reminder" | "follow-up" | "info";
 }
+
+type DeliveryChannel = "browser" | "in-app" | "email";
 
 const DEFAULT_SUMMARY_OPTIONS: SummaryOptions = {
   length: "detailed",
@@ -221,6 +238,14 @@ export function MeetingsManager() {
     "wpa:meetings:reminder:minutes",
     10,
   );
+  const [deliveryChannel, setDeliveryChannel] = useLocalStorage<DeliveryChannel>(
+    "wpa:meetings:reminder:channel",
+    "browser",
+  );
+  const [reminderEmail, setReminderEmail] = useLocalStorage<string>(
+    "wpa:meetings:reminder:email",
+    "",
+  );
 
   // Migration: ensure attendees are objects with roles.
   const setMeetings = (updater: Meeting[] | ((prev: Meeting[]) => Meeting[])) => {
@@ -277,8 +302,22 @@ export function MeetingsManager() {
   };
 
   const handleNotify = (title: string, body?: string) => {
-    notify(title, body);
+    // In-app entry is always recorded so the bell stays a single source of truth.
     pushNotification({ title, body: body ?? "", kind: "reminder" });
+    if (deliveryChannel === "browser") {
+      notify(title, body);
+    } else if (deliveryChannel === "email") {
+      if (reminderEmail) {
+        // Email delivery requires the project's email infrastructure to be set
+        // up (domain + verified DNS). Until then the bell + toast stand in.
+        toast.message(`Email reminder: ${title}`, {
+          description: `Pending email delivery to ${reminderEmail}. Finish email setup to enable sends.`,
+        });
+      } else {
+        toast.message(title, { description: body });
+      }
+    }
+    // "in-app" channel relies solely on the bell — no toast/system popup.
   };
 
   const upcomingTargets = useMemo<ReminderTarget[]>(
@@ -506,14 +545,31 @@ export function MeetingsManager() {
         },
       });
     },
-    onSuccess: (res) => {
-      if (!active) return;
-      updateMeeting(active.id, { summary: res.summary });
+    onSuccess: (res, variables) => {
+      const target = variables;
+      // Preserve the previous summary in history before overwriting so the
+      // user can diff old vs new generations.
+      const prevHistory = target.summaryHistory ?? [];
+      const nextHistory: SummaryHistoryEntry[] =
+        target.summary?.trim()
+          ? [
+              {
+                ts: Date.now(),
+                summary: target.summary,
+                options: target.summaryOptions ?? DEFAULT_SUMMARY_OPTIONS,
+              },
+              ...prevHistory,
+            ].slice(0, 10)
+          : prevHistory;
+      updateMeeting(target.id, {
+        summary: res.summary,
+        summaryHistory: nextHistory,
+      });
       toast.success("Summary generated");
       pushNotification({
-        meetingId: active.id,
+        meetingId: target.id,
         kind: "follow-up",
-        title: `Summary ready: ${active.title}`,
+        title: `Summary ready: ${target.title}`,
         body: "Review action items and follow-ups.",
       });
     },
@@ -544,8 +600,12 @@ export function MeetingsManager() {
           enabled={reminderEnabled}
           minutes={reminderMinutes}
           permission={permission}
+          channel={deliveryChannel}
+          email={reminderEmail}
           onToggle={handleToggleReminders}
           onMinutesChange={setReminderMinutes}
+          onChannelChange={setDeliveryChannel}
+          onEmailChange={setReminderEmail}
         />
         <IcsImportDialog onImport={importIcsText} />
       </div>
@@ -776,14 +836,22 @@ function ReminderSettings({
   enabled,
   minutes,
   permission,
+  channel,
+  email,
   onToggle,
   onMinutesChange,
+  onChannelChange,
+  onEmailChange,
 }: {
   enabled: boolean;
   minutes: number;
   permission: string;
+  channel: DeliveryChannel;
+  email: string;
   onToggle: () => void;
   onMinutesChange: (m: number) => void;
+  onChannelChange: (c: DeliveryChannel) => void;
+  onEmailChange: (e: string) => void;
 }) {
   return (
     <Popover>
@@ -793,9 +861,9 @@ function ReminderSettings({
           Reminders
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 space-y-3" align="end">
+      <PopoverContent className="w-80 space-y-3" align="end">
         <div className="flex items-center justify-between">
-          <Label className="text-sm">Browser reminders</Label>
+          <Label className="text-sm">Reminders</Label>
           <Switch checked={enabled} onCheckedChange={onToggle} />
         </div>
         <div className="space-y-1">
@@ -817,12 +885,46 @@ function ReminderSettings({
             </SelectContent>
           </Select>
         </div>
-        {permission === "denied" && (
+        <div className="space-y-1 pt-2 border-t border-border/40">
+          <Label className="text-xs text-muted-foreground">Deliver via</Label>
+          <Select value={channel} onValueChange={(v) => onChannelChange(v as DeliveryChannel)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="browser">
+                <Bell className="inline h-3 w-3 mr-1" /> Browser notification
+              </SelectItem>
+              <SelectItem value="in-app">
+                <Inbox className="inline h-3 w-3 mr-1" /> In-app only
+              </SelectItem>
+              <SelectItem value="email">
+                <Mail className="inline h-3 w-3 mr-1" /> Email
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {channel === "email" && (
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Send to</Label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => onEmailChange(e.target.value)}
+              placeholder="you@example.com"
+              className="h-8 text-sm"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Email delivery activates once the workspace email domain is verified.
+            </p>
+          </div>
+        )}
+        {channel === "browser" && permission === "denied" && (
           <p className="text-xs text-amber-400">
             Browser notifications are blocked. Enable them in browser site settings.
           </p>
         )}
-        {permission === "unsupported" && (
+        {channel === "browser" && permission === "unsupported" && (
           <p className="text-xs text-muted-foreground">
             This browser doesn't support notifications.
           </p>
@@ -948,6 +1050,29 @@ function MeetingDetail({
     summary: meeting.summary,
   };
 
+  const handleAddToCalendar = () => {
+    if (!meeting.startsAt) {
+      toast.error("Set a meeting time before exporting.");
+      return;
+    }
+    try {
+      const ics = buildIcsForMeeting({
+        uid: meeting.id,
+        title: meeting.title,
+        startsAt: meeting.startsAt,
+        durationMinutes: 30,
+        joinUrl: meeting.joinUrl,
+        description: meeting.notes,
+        attendees: meeting.attendees.map((a) => a.name),
+      });
+      const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+      downloadBlob(blob, `${sanitizeFilename(meeting.title)}.ics`);
+      toast.success("Calendar invite downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't build invite");
+    }
+  };
+
   const opts = meeting.summaryOptions ?? DEFAULT_SUMMARY_OPTIONS;
   const setOpts = (patch: Partial<SummaryOptions>) =>
     onUpdate({ summaryOptions: { ...opts, ...patch } });
@@ -987,6 +1112,15 @@ function MeetingDetail({
               >
                 <Video className="mr-1 h-4 w-4" /> Join
                 <ExternalLink className="ml-1 h-3 w-3 opacity-70" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddToCalendar}
+                disabled={!meeting.startsAt}
+                title="Download .ics invite"
+              >
+                <CalendarPlus className="mr-1 h-4 w-4" /> Add to calendar
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -1100,6 +1234,18 @@ function MeetingDetail({
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="text-base">AI Summary</CardTitle>
             <div className="flex gap-1">
+              {(meeting.summaryHistory?.length ?? 0) > 0 && (
+                <SummaryHistoryDialog
+                  current={meeting.summary}
+                  history={meeting.summaryHistory ?? []}
+                  onRestore={(entry) =>
+                    onUpdate({
+                      summary: entry.summary,
+                      summaryOptions: entry.options,
+                    })
+                  }
+                />
+              )}
               <Button variant="ghost" size="sm" onClick={handleCopySummary}>
                 <Copy className="mr-1 h-4 w-4" /> Copy
               </Button>
@@ -1269,3 +1415,135 @@ function AttendeesCard({
     </Card>
   );
 }
+
+// ===== Summary history & diff =====
+
+function summaryOptionsLabel(opts: SummaryOptions): string {
+  const sections = [
+    opts.decisions && "Decisions",
+    opts.actionItems && "Action Items",
+    opts.openQuestions && "Open Questions",
+    opts.followUps && "Follow-ups",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return `${opts.length === "brief" ? "Brief" : "Detailed"}${sections ? ` · ${sections}` : ""}`;
+}
+
+function SummaryHistoryDialog({
+  current,
+  history,
+  onRestore,
+}: {
+  current: string;
+  history: SummaryHistoryEntry[];
+  onRestore: (entry: SummaryHistoryEntry) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [selectedTs, setSelectedTs] = useState<number | null>(
+    history[0]?.ts ?? null,
+  );
+
+  const selected = useMemo(
+    () => history.find((h) => h.ts === selectedTs) ?? history[0],
+    [history, selectedTs],
+  );
+
+  const diff = useMemo(
+    () => (selected ? diffLines(selected.summary, current) : []),
+    [selected, current],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <History className="mr-1 h-4 w-4" /> History ({history.length})
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <GitCompare className="h-4 w-4" /> Summary history & diff
+          </DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 md:grid-cols-[200px_1fr]">
+          <div className="space-y-1 max-h-[420px] overflow-auto">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pb-1">
+              Previous versions
+            </p>
+            {history.map((h) => {
+              const active = h.ts === selected?.ts;
+              return (
+                <button
+                  key={h.ts}
+                  onClick={() => setSelectedTs(h.ts)}
+                  className={`w-full text-left rounded-md border p-2 transition-colors ${
+                    active
+                      ? "border-primary/60 bg-primary/5"
+                      : "border-border/40 hover:bg-muted/40"
+                  }`}
+                >
+                  <p className="text-xs font-medium">
+                    {new Date(h.ts).toLocaleString()}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">
+                    {summaryOptionsLabel(h.options)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+          <div className="space-y-2 min-w-0">
+            {selected ? (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    Showing diff from{" "}
+                    <span className="font-medium text-foreground">
+                      {new Date(selected.ts).toLocaleString()}
+                    </span>{" "}
+                    → current
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      onRestore(selected);
+                      toast.success("Previous summary restored");
+                      setOpen(false);
+                    }}
+                  >
+                    <RefreshCw className="mr-1 h-3.5 w-3.5" /> Restore this version
+                  </Button>
+                </div>
+                <pre className="max-h-[420px] overflow-auto rounded-lg border border-border/60 bg-muted/20 p-3 text-xs leading-relaxed font-mono whitespace-pre-wrap">
+                  {diff.map((d, i) => (
+                    <div
+                      key={i}
+                      className={
+                        d.op === "add"
+                          ? "bg-emerald-500/15 text-emerald-300"
+                          : d.op === "del"
+                            ? "bg-red-500/15 text-red-300 line-through decoration-red-400/60"
+                            : "text-muted-foreground"
+                      }
+                    >
+                      <span className="select-none opacity-60 mr-2">
+                        {d.op === "add" ? "+" : d.op === "del" ? "−" : " "}
+                      </span>
+                      {d.text || "\u00A0"}
+                    </div>
+                  ))}
+                </pre>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">No previous versions.</p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
