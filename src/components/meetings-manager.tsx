@@ -1415,3 +1415,135 @@ function AttendeesCard({
     </Card>
   );
 }
+
+// ===== Summary history & diff =====
+
+function summaryOptionsLabel(opts: SummaryOptions): string {
+  const sections = [
+    opts.decisions && "Decisions",
+    opts.actionItems && "Action Items",
+    opts.openQuestions && "Open Questions",
+    opts.followUps && "Follow-ups",
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return `${opts.length === "brief" ? "Brief" : "Detailed"}${sections ? ` · ${sections}` : ""}`;
+}
+
+function SummaryHistoryDialog({
+  current,
+  history,
+  onRestore,
+}: {
+  current: string;
+  history: SummaryHistoryEntry[];
+  onRestore: (entry: SummaryHistoryEntry) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [selectedTs, setSelectedTs] = useState<number | null>(
+    history[0]?.ts ?? null,
+  );
+
+  const selected = useMemo(
+    () => history.find((h) => h.ts === selectedTs) ?? history[0],
+    [history, selectedTs],
+  );
+
+  const diff = useMemo(
+    () => (selected ? diffLines(selected.summary, current) : []),
+    [selected, current],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <History className="mr-1 h-4 w-4" /> History ({history.length})
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <GitCompare className="h-4 w-4" /> Summary history & diff
+          </DialogTitle>
+        </DialogHeader>
+        <div className="grid gap-4 md:grid-cols-[200px_1fr]">
+          <div className="space-y-1 max-h-[420px] overflow-auto">
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground px-2 pb-1">
+              Previous versions
+            </p>
+            {history.map((h) => {
+              const active = h.ts === selected?.ts;
+              return (
+                <button
+                  key={h.ts}
+                  onClick={() => setSelectedTs(h.ts)}
+                  className={`w-full text-left rounded-md border p-2 transition-colors ${
+                    active
+                      ? "border-primary/60 bg-primary/5"
+                      : "border-border/40 hover:bg-muted/40"
+                  }`}
+                >
+                  <p className="text-xs font-medium">
+                    {new Date(h.ts).toLocaleString()}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2">
+                    {summaryOptionsLabel(h.options)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+          <div className="space-y-2 min-w-0">
+            {selected ? (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    Showing diff from{" "}
+                    <span className="font-medium text-foreground">
+                      {new Date(selected.ts).toLocaleString()}
+                    </span>{" "}
+                    → current
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      onRestore(selected);
+                      toast.success("Previous summary restored");
+                      setOpen(false);
+                    }}
+                  >
+                    <RefreshCw className="mr-1 h-3.5 w-3.5" /> Restore this version
+                  </Button>
+                </div>
+                <pre className="max-h-[420px] overflow-auto rounded-lg border border-border/60 bg-muted/20 p-3 text-xs leading-relaxed font-mono whitespace-pre-wrap">
+                  {diff.map((d, i) => (
+                    <div
+                      key={i}
+                      className={
+                        d.op === "add"
+                          ? "bg-emerald-500/15 text-emerald-300"
+                          : d.op === "del"
+                            ? "bg-red-500/15 text-red-300 line-through decoration-red-400/60"
+                            : "text-muted-foreground"
+                      }
+                    >
+                      <span className="select-none opacity-60 mr-2">
+                        {d.op === "add" ? "+" : d.op === "del" ? "−" : " "}
+                      </span>
+                      {d.text || "\u00A0"}
+                    </div>
+                  ))}
+                </pre>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">No previous versions.</p>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
