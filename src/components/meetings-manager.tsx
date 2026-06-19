@@ -109,6 +109,12 @@ interface SummaryOptions {
   followUps: boolean;
 }
 
+interface SummaryHistoryEntry {
+  ts: number;
+  summary: string;
+  options: SummaryOptions;
+}
+
 interface Meeting {
   id: string;
   title: string;
@@ -121,6 +127,7 @@ interface Meeting {
   source: "manual" | "google" | "fireflies" | "ics";
   createdAt: number;
   summaryOptions?: SummaryOptions;
+  summaryHistory?: SummaryHistoryEntry[];
 }
 
 interface NotificationItem {
@@ -132,6 +139,8 @@ interface NotificationItem {
   read: boolean;
   kind: "reminder" | "follow-up" | "info";
 }
+
+type DeliveryChannel = "browser" | "in-app" | "email";
 
 const DEFAULT_SUMMARY_OPTIONS: SummaryOptions = {
   length: "detailed",
