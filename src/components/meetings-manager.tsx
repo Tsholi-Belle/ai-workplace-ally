@@ -545,14 +545,31 @@ export function MeetingsManager() {
         },
       });
     },
-    onSuccess: (res) => {
-      if (!active) return;
-      updateMeeting(active.id, { summary: res.summary });
+    onSuccess: (res, variables) => {
+      const target = variables;
+      // Preserve the previous summary in history before overwriting so the
+      // user can diff old vs new generations.
+      const prevHistory = target.summaryHistory ?? [];
+      const nextHistory: SummaryHistoryEntry[] =
+        target.summary?.trim()
+          ? [
+              {
+                ts: Date.now(),
+                summary: target.summary,
+                options: target.summaryOptions ?? DEFAULT_SUMMARY_OPTIONS,
+              },
+              ...prevHistory,
+            ].slice(0, 10)
+          : prevHistory;
+      updateMeeting(target.id, {
+        summary: res.summary,
+        summaryHistory: nextHistory,
+      });
       toast.success("Summary generated");
       pushNotification({
-        meetingId: active.id,
+        meetingId: target.id,
         kind: "follow-up",
-        title: `Summary ready: ${active.title}`,
+        title: `Summary ready: ${target.title}`,
         body: "Review action items and follow-ups.",
       });
     },
