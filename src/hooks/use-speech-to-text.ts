@@ -40,6 +40,7 @@ export function useSpeechToText(opts?: {
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const userStoppedRef = useRef(true);
   const callbackRef = useRef(onTranscript);
   callbackRef.current = onTranscript;
 
@@ -50,15 +51,24 @@ export function useSpeechToText(opts?: {
   const start = useCallback(() => {
     const Ctor = getRecognitionCtor();
     if (!Ctor) return;
+    // If a session already exists, keep it — don't abort (abort briefly
+    // releases the shared mic stream and can hiccup other apps).
     if (recognitionRef.current) {
+      userStoppedRef.current = false;
       try {
-        recognitionRef.current.abort();
+        recognitionRef.current.start();
+        setListening(true);
       } catch {
-        // ignore
+        // already started — fine
+        setListening(true);
       }
+      return;
     }
     const rec = new Ctor();
     rec.lang = lang;
+    // continuous + interim keeps the recognizer streaming so it co-exists
+    // with meeting apps (Zoom/Meet/Teams) sharing the same input device
+    // rather than repeatedly opening/closing the mic.
     rec.continuous = true;
     rec.interimResults = true;
     rec.onresult = (event) => {
@@ -68,13 +78,29 @@ export function useSpeechToText(opts?: {
         callbackRef.current?.(transcript, result.isFinal);
       }
     };
-    rec.onerror = () => {
-      setListening(false);
+    rec.onerror = (e) => {
+      // 'no-speech' / 'aborted' shouldn't kill the session while the user
+      // is still meant to be recording — let onend auto-restart handle it.
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        userStoppedRef.current = true;
+        setListening(false);
+      }
     };
     rec.onend = () => {
+      // Auto-restart if the user hasn't explicitly stopped — keeps dictation
+      // alive across silence gaps without re-prompting for mic permission.
+      if (!userStoppedRef.current) {
+        try {
+          rec.start();
+          return;
+        } catch {
+          // fall through to stopped state
+        }
+      }
       setListening(false);
     };
     recognitionRef.current = rec;
+    userStoppedRef.current = false;
     try {
       rec.start();
       setListening(true);
@@ -84,6 +110,7 @@ export function useSpeechToText(opts?: {
   }, [lang]);
 
   const stop = useCallback(() => {
+    userStoppedRef.current = true;
     try {
       recognitionRef.current?.stop();
     } catch {
