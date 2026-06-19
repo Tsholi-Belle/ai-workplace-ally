@@ -836,14 +836,22 @@ function ReminderSettings({
   enabled,
   minutes,
   permission,
+  channel,
+  email,
   onToggle,
   onMinutesChange,
+  onChannelChange,
+  onEmailChange,
 }: {
   enabled: boolean;
   minutes: number;
   permission: string;
+  channel: DeliveryChannel;
+  email: string;
   onToggle: () => void;
   onMinutesChange: (m: number) => void;
+  onChannelChange: (c: DeliveryChannel) => void;
+  onEmailChange: (e: string) => void;
 }) {
   return (
     <Popover>
@@ -853,9 +861,9 @@ function ReminderSettings({
           Reminders
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 space-y-3" align="end">
+      <PopoverContent className="w-80 space-y-3" align="end">
         <div className="flex items-center justify-between">
-          <Label className="text-sm">Browser reminders</Label>
+          <Label className="text-sm">Reminders</Label>
           <Switch checked={enabled} onCheckedChange={onToggle} />
         </div>
         <div className="space-y-1">
@@ -877,12 +885,46 @@ function ReminderSettings({
             </SelectContent>
           </Select>
         </div>
-        {permission === "denied" && (
+        <div className="space-y-1 pt-2 border-t border-border/40">
+          <Label className="text-xs text-muted-foreground">Deliver via</Label>
+          <Select value={channel} onValueChange={(v) => onChannelChange(v as DeliveryChannel)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="browser">
+                <Bell className="inline h-3 w-3 mr-1" /> Browser notification
+              </SelectItem>
+              <SelectItem value="in-app">
+                <Inbox className="inline h-3 w-3 mr-1" /> In-app only
+              </SelectItem>
+              <SelectItem value="email">
+                <Mail className="inline h-3 w-3 mr-1" /> Email
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {channel === "email" && (
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">Send to</Label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => onEmailChange(e.target.value)}
+              placeholder="you@example.com"
+              className="h-8 text-sm"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Email delivery activates once the workspace email domain is verified.
+            </p>
+          </div>
+        )}
+        {channel === "browser" && permission === "denied" && (
           <p className="text-xs text-amber-400">
             Browser notifications are blocked. Enable them in browser site settings.
           </p>
         )}
-        {permission === "unsupported" && (
+        {channel === "browser" && permission === "unsupported" && (
           <p className="text-xs text-muted-foreground">
             This browser doesn't support notifications.
           </p>
