@@ -302,8 +302,22 @@ export function MeetingsManager() {
   };
 
   const handleNotify = (title: string, body?: string) => {
-    notify(title, body);
+    // In-app entry is always recorded so the bell stays a single source of truth.
     pushNotification({ title, body: body ?? "", kind: "reminder" });
+    if (deliveryChannel === "browser") {
+      notify(title, body);
+    } else if (deliveryChannel === "email") {
+      if (reminderEmail) {
+        // Email delivery requires the project's email infrastructure to be set
+        // up (domain + verified DNS). Until then the bell + toast stand in.
+        toast.message(`Email reminder: ${title}`, {
+          description: `Pending email delivery to ${reminderEmail}. Finish email setup to enable sends.`,
+        });
+      } else {
+        toast.message(title, { description: body });
+      }
+    }
+    // "in-app" channel relies solely on the bell — no toast/system popup.
   };
 
   const upcomingTargets = useMemo<ReminderTarget[]>(
