@@ -1113,6 +1113,15 @@ function MeetingDetail({
                 <Video className="mr-1 h-4 w-4" /> Join
                 <ExternalLink className="ml-1 h-3 w-3 opacity-70" />
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddToCalendar}
+                disabled={!meeting.startsAt}
+                title="Download .ics invite"
+              >
+                <CalendarPlus className="mr-1 h-4 w-4" /> Add to calendar
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" aria-label="Export">
