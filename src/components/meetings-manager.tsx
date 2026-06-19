@@ -238,6 +238,14 @@ export function MeetingsManager() {
     "wpa:meetings:reminder:minutes",
     10,
   );
+  const [deliveryChannel, setDeliveryChannel] = useLocalStorage<DeliveryChannel>(
+    "wpa:meetings:reminder:channel",
+    "browser",
+  );
+  const [reminderEmail, setReminderEmail] = useLocalStorage<string>(
+    "wpa:meetings:reminder:email",
+    "",
+  );
 
   // Migration: ensure attendees are objects with roles.
   const setMeetings = (updater: Meeting[] | ((prev: Meeting[]) => Meeting[])) => {
