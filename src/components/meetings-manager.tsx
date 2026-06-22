@@ -32,6 +32,7 @@ import {
   Inbox,
 } from "lucide-react";
 import { toast } from "sonner";
+import { MeetingFiles } from "@/components/meeting-files";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1259,6 +1260,8 @@ function MeetingDetail({
           </CardContent>
         </Card>
       )}
+
+      <MeetingFiles meetingId={meeting.id} />
     </div>
   );
 }

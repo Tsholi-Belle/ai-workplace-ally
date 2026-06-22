@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, FileText, ListChecks, Search, Sparkles, Languages, Video } from "lucide-react";
+import { LayoutDashboard, FileText, ListChecks, Search, Sparkles, Languages, Video, LogIn, LogOut } from "lucide-react";
+import { toast } from "sonner";
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +13,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -20,10 +23,17 @@ const items = [
   { title: "Task Planner", url: "/task-planner", icon: ListChecks },
   { title: "Research", url: "/research", icon: Search },
   { title: "Translator", url: "/translate", icon: Languages },
-];
+] as const;
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const { user } = useAuth();
+
+  async function handleSignOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) toast.error(error.message);
+    else toast.success("Signed out");
+  }
 
   return (
     <Sidebar collapsible="icon">
@@ -53,6 +63,30 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {user ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton onClick={handleSignOut} tooltip={user.email ?? "Sign out"}>
+                    <LogOut />
+                    <span className="truncate">{user.email ?? "Sign out"}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={pathname === "/auth"} tooltip="Sign in">
+                    <Link to="/auth">
+                      <LogIn />
+                      <span>Sign in</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
