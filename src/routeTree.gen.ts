@@ -14,6 +14,7 @@ import { Route as TaskPlannerRouteImport } from './routes/task-planner'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as MeetingsRouteImport } from './routes/meetings'
 import { Route as MeetingNotesRouteImport } from './routes/meeting-notes'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
 const TranslateRoute = TranslateRouteImport.update({
@@ -41,6 +42,11 @@ const MeetingNotesRoute = MeetingNotesRouteImport.update({
   path: '/meeting-notes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -49,6 +55,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/meeting-notes': typeof MeetingNotesRoute
   '/meetings': typeof MeetingsRoute
   '/research': typeof ResearchRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/meeting-notes': typeof MeetingNotesRoute
   '/meetings': typeof MeetingsRoute
   '/research': typeof ResearchRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/meeting-notes': typeof MeetingNotesRoute
   '/meetings': typeof MeetingsRoute
   '/research': typeof ResearchRoute
@@ -76,6 +85,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/meeting-notes'
     | '/meetings'
     | '/research'
@@ -84,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/meeting-notes'
     | '/meetings'
     | '/research'
@@ -92,6 +103,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/auth'
     | '/meeting-notes'
     | '/meetings'
     | '/research'
@@ -101,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   MeetingNotesRoute: typeof MeetingNotesRoute
   MeetingsRoute: typeof MeetingsRoute
   ResearchRoute: typeof ResearchRoute
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeetingNotesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -157,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   MeetingNotesRoute: MeetingNotesRoute,
   MeetingsRoute: MeetingsRoute,
   ResearchRoute: ResearchRoute,
