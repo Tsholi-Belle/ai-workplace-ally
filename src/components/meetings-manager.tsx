@@ -1146,6 +1146,14 @@ function MeetingDetail({
               >
                 <CalendarPlus className="mr-1 h-4 w-4" /> Add to calendar
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyInvite}
+                title="Copy shareable invite link"
+              >
+                <Link2 className="mr-1 h-4 w-4" /> Copy invite link
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" aria-label="Export">
