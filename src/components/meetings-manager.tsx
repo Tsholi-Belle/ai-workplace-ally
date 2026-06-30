@@ -30,6 +30,7 @@ import {
   CalendarPlus,
   Mail,
   Inbox,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MeetingFiles } from "@/components/meeting-files";
@@ -93,6 +94,7 @@ import {
   type ExportPayload,
 } from "@/lib/meeting-export";
 import { diffLines } from "@/lib/diff";
+import { buildInviteUrl } from "@/lib/invite";
 
 type Platform = "zoom" | "meet" | "teams" | "webex" | "other";
 type Role = "owner" | "editor" | "viewer";
@@ -1074,6 +1076,27 @@ function MeetingDetail({
     }
   };
 
+  const handleCopyInvite = async () => {
+    const owner = meeting.attendees.find((a) => a.role === "owner")?.name;
+    const url = buildInviteUrl(window.location.origin, {
+      v: 1,
+      iid: meeting.id,
+      title: meeting.title,
+      joinUrl: meeting.joinUrl,
+      startsAt: meeting.startsAt,
+      platform: meeting.platform,
+      notes: meeting.notes,
+      attendees: meeting.attendees,
+      invitedBy: owner,
+    });
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Invite link copied — paste it into email, Slack, or Teams.");
+    } catch {
+      toast.error("Couldn't copy. Long-press to copy: " + url);
+    }
+  };
+
   const opts = meeting.summaryOptions ?? DEFAULT_SUMMARY_OPTIONS;
   const setOpts = (patch: Partial<SummaryOptions>) =>
     onUpdate({ summaryOptions: { ...opts, ...patch } });
@@ -1122,6 +1145,14 @@ function MeetingDetail({
                 title="Download .ics invite"
               >
                 <CalendarPlus className="mr-1 h-4 w-4" /> Add to calendar
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyInvite}
+                title="Copy shareable invite link"
+              >
+                <Link2 className="mr-1 h-4 w-4" /> Copy invite link
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
