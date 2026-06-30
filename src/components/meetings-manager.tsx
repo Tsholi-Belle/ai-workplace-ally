@@ -30,6 +30,7 @@ import {
   CalendarPlus,
   Mail,
   Inbox,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MeetingFiles } from "@/components/meeting-files";
@@ -93,6 +94,7 @@ import {
   type ExportPayload,
 } from "@/lib/meeting-export";
 import { diffLines } from "@/lib/diff";
+import { buildInviteUrl } from "@/lib/invite";
 
 type Platform = "zoom" | "meet" | "teams" | "webex" | "other";
 type Role = "owner" | "editor" | "viewer";
@@ -1071,6 +1073,27 @@ function MeetingDetail({
       toast.success("Calendar invite downloaded");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't build invite");
+    }
+  };
+
+  const handleCopyInvite = async () => {
+    const owner = meeting.attendees.find((a) => a.role === "owner")?.name;
+    const url = buildInviteUrl(window.location.origin, {
+      v: 1,
+      iid: meeting.id,
+      title: meeting.title,
+      joinUrl: meeting.joinUrl,
+      startsAt: meeting.startsAt,
+      platform: meeting.platform,
+      notes: meeting.notes,
+      attendees: meeting.attendees,
+      invitedBy: owner,
+    });
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Invite link copied — paste it into email, Slack, or Teams.");
+    } catch {
+      toast.error("Couldn't copy. Long-press to copy: " + url);
     }
   };
 
