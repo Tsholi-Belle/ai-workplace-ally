@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -95,6 +95,7 @@ import {
 } from "@/lib/meeting-export";
 import { diffLines } from "@/lib/diff";
 import { buildInviteUrl } from "@/lib/invite";
+import { getInviteStats, subscribeInviteStats, type InviteStats } from "@/lib/invite-tracking";
 
 type Platform = "zoom" | "meet" | "teams" | "webex" | "other";
 type Role = "owner" | "editor" | "viewer";
@@ -140,7 +141,8 @@ interface NotificationItem {
   body: string;
   ts: number;
   read: boolean;
-  kind: "reminder" | "follow-up" | "info";
+  kind: "reminder" | "follow-up" | "info" | "invite";
+  invitePending?: boolean;
 }
 
 type DeliveryChannel = "browser" | "in-app" | "email";
@@ -1101,6 +1103,13 @@ function MeetingDetail({
   const setOpts = (patch: Partial<SummaryOptions>) =>
     onUpdate({ summaryOptions: { ...opts, ...patch } });
 
+  // Invite link analytics for this meeting (opens / accepts).
+  const [inviteStats, setInviteStats] = useState<InviteStats>(() => getInviteStats(meeting.id));
+  useEffect(() => {
+    setInviteStats(getInviteStats(meeting.id));
+    return subscribeInviteStats(() => setInviteStats(getInviteStats(meeting.id)));
+  }, [meeting.id]);
+
   const canEdit = true; // local advisory
 
   return (
@@ -1124,6 +1133,14 @@ function MeetingDetail({
                 {meeting.attendees.length > 0 && (
                   <span className="flex items-center gap-1">
                     <Users className="h-3 w-3" /> {meeting.attendees.length}
+                  </span>
+                )}
+                {(inviteStats.opens > 0 || inviteStats.accepts > 0) && (
+                  <span
+                    className="flex items-center gap-1"
+                    title={`Invite link — ${inviteStats.opens} open${inviteStats.opens === 1 ? "" : "s"}, ${inviteStats.accepts} accept${inviteStats.accepts === 1 ? "" : "s"}`}
+                  >
+                    <Link2 className="h-3 w-3" /> {inviteStats.opens} opened · {inviteStats.accepts} accepted
                   </span>
                 )}
               </div>
