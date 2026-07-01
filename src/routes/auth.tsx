@@ -23,12 +23,6 @@ export const Route = createFileRoute("/auth")({
   }),
   component: AuthPage,
 });
-      { title: "Sign in — Workplace Ally" },
-      { name: "description", content: "Sign in to sync your meetings, notes, and files across devices." },
-    ],
-  }),
-  component: AuthPage,
-});
 
 function AuthPage() {
   const navigate = useNavigate();
