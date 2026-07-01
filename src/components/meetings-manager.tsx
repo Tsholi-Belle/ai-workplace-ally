@@ -1103,6 +1103,13 @@ function MeetingDetail({
   const setOpts = (patch: Partial<SummaryOptions>) =>
     onUpdate({ summaryOptions: { ...opts, ...patch } });
 
+  // Invite link analytics for this meeting (opens / accepts).
+  const [inviteStats, setInviteStats] = useState<InviteStats>(() => getInviteStats(meeting.id));
+  useEffect(() => {
+    setInviteStats(getInviteStats(meeting.id));
+    return subscribeInviteStats(() => setInviteStats(getInviteStats(meeting.id)));
+  }, [meeting.id]);
+
   const canEdit = true; // local advisory
 
   return (
