@@ -26,14 +26,21 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
   const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/meetings" });
-  }, [user, loading, navigate]);
+    if (!loading && user) {
+      if (redirect && redirect.startsWith("/")) {
+        window.location.assign(redirect);
+      } else {
+        navigate({ to: "/meetings" });
+      }
+    }
+  }, [user, loading, navigate, redirect]);
 
   async function handleEmail(mode: "signin" | "signup") {
     setBusy(true);
