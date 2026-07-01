@@ -1135,6 +1135,14 @@ function MeetingDetail({
                     <Users className="h-3 w-3" /> {meeting.attendees.length}
                   </span>
                 )}
+                {(inviteStats.opens > 0 || inviteStats.accepts > 0) && (
+                  <span
+                    className="flex items-center gap-1"
+                    title={`Invite link — ${inviteStats.opens} open${inviteStats.opens === 1 ? "" : "s"}, ${inviteStats.accepts} accept${inviteStats.accepts === 1 ? "" : "s"}`}
+                  >
+                    <Link2 className="h-3 w-3" /> {inviteStats.opens} opened · {inviteStats.accepts} accepted
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex flex-shrink-0 gap-2">
