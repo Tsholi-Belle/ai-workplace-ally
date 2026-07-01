@@ -2,9 +2,6 @@
 // self-contained invite link. Owner and recipient both write to the same
 // localStorage key on their device, so an owner previewing their own invite
 // link will see their opens/accepts reflected in the meeting header.
-//
-// This is intentionally client-only: the invite payload never touches a
-// server, so there's no cross-browser aggregation to do.
 
 export type InviteEventKind = "open" | "accept";
 
@@ -43,16 +40,19 @@ function write(next: Store) {
   }
 }
 
+const listeners = new Set<() => void>();
+
 export function recordInviteEvent(meetingId: string, kind: InviteEventKind) {
   if (!meetingId) return;
   const store = read();
   const list = store[meetingId] ?? [];
-  // De-dupe rapid duplicates from React strict-mode double effects (<2s apart).
+  // De-dupe rapid duplicates (React strict-mode double effects, <2s apart).
   const last = list[list.length - 1];
   if (last && last.kind === kind && Date.now() - last.ts < 2000) return;
   list.push({ kind, ts: Date.now() });
   store[meetingId] = list.slice(-100);
   write(store);
+  for (const cb of listeners) cb();
 }
 
 export function getInviteStats(meetingId: string): InviteStats {
@@ -70,10 +70,6 @@ export function getInviteStats(meetingId: string): InviteStats {
   return stats;
 }
 
-// Small pub/sub so components can react to stat changes in the same tab.
-// (Storage events don't fire in the tab that wrote them.)
-const listeners = new Set<() => void>();
-
 export function subscribeInviteStats(cb: () => void) {
   listeners.add(cb);
   const onStorage = (e: StorageEvent) => {
@@ -84,15 +80,4 @@ export function subscribeInviteStats(cb: () => void) {
     listeners.delete(cb);
     if (typeof window !== "undefined") window.removeEventListener("storage", onStorage);
   };
-}
-
-function notifyLocal() {
-  for (const cb of listeners) cb();
-}
-
-// Wrap writers to fan out to local subscribers.
-const _origRecord = recordInviteEvent;
-export function recordInviteEventNotify(meetingId: string, kind: InviteEventKind) {
-  _origRecord(meetingId, kind);
-  notifyLocal();
 }
