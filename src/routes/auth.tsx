@@ -12,8 +12,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
   head: () => ({
     meta: [
+      { title: "Sign in — Workplace Ally" },
+      { name: "description", content: "Sign in to sync your meetings, notes, and files across devices." },
+    ],
+  }),
+  component: AuthPage,
+});
       { title: "Sign in — Workplace Ally" },
       { name: "description", content: "Sign in to sync your meetings, notes, and files across devices." },
     ],
