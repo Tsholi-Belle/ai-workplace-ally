@@ -140,7 +140,8 @@ interface NotificationItem {
   body: string;
   ts: number;
   read: boolean;
-  kind: "reminder" | "follow-up" | "info";
+  kind: "reminder" | "follow-up" | "info" | "invite";
+  invitePending?: boolean;
 }
 
 type DeliveryChannel = "browser" | "in-app" | "email";
