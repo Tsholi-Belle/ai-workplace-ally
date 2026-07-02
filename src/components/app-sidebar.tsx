@@ -40,7 +40,7 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <Link to="/" className="flex items-center gap-2 px-2 py-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary shadow-elegant">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
+            <Laptop className="h-4 w-4 text-primary-foreground" />
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-display text-sm font-semibold leading-tight">Workplace Ally</span>
