@@ -58,6 +58,18 @@ const LANGUAGES = [
   "Indonesian",
   "Russian",
   "Ukrainian",
+  // South African official languages
+  "Afrikaans",
+  "Zulu (isiZulu)",
+  "Xhosa (isiXhosa)",
+  "Southern Sotho (Sesotho)",
+  "Northern Sotho (Sepedi)",
+  "Tswana (Setswana)",
+  "Swati (siSwati)",
+  "Venda (Tshivenda)",
+  "Tsonga (Xitsonga)",
+  "Ndebele (isiNdebele)",
+  "South African English",
 ];
 
 type Tone = "faithful" | "formal" | "casual";
