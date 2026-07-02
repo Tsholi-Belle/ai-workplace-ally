@@ -768,12 +768,14 @@ function NotificationsPanel({
   onMarkAllRead,
   onClear,
   onOpenMeeting,
+  onDeclineInvite,
 }: {
   notifications: NotificationItem[];
   unread: number;
   onMarkAllRead: () => void;
   onClear: () => void;
   onOpenMeeting: (id: string) => void;
+  onDeclineInvite?: (meetingId: string, title: string) => void;
 }) {
   return (
     <Popover>
