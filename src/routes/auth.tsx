@@ -73,7 +73,7 @@ function AuthPage() {
       <Card className="w-full shadow-card">
         <CardHeader className="text-center">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg gradient-primary shadow-elegant">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
+            <Laptop className="h-5 w-5 text-primary-foreground" />
           </div>
           <CardTitle className="font-display">Welcome to Workplace Ally</CardTitle>
         </CardHeader>
