@@ -132,7 +132,10 @@ function InvitePage() {
 
     recordInviteEvent(mid, "open");
 
-    if (!alreadyAccepted) {
+    const declined = readJson<string[]>("wpa:invites:declined", []);
+    const wasDeclined = declined.includes(mid);
+
+    if (!alreadyAccepted && !wasDeclined) {
       const notes = readJson<StoredNotification[]>(NOTIF_KEY, []);
       const already = notes.some(
         (n) => n.meetingId === mid && n.kind === "invite" && n.invitePending,

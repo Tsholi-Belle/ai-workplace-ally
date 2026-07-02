@@ -15,6 +15,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { InviteBell } from "@/components/invite-bell";
 import { useTheme } from "@/hooks/use-theme";
 
 function NotFoundComponent() {
@@ -148,7 +149,8 @@ function RootComponent() {
             <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border/60 bg-background/80 px-4 backdrop-blur">
               <SidebarTrigger />
               <div className="text-sm text-muted-foreground">Workplace Ally</div>
-              <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-1">
+                <InviteBell />
                 <ThemeToggle />
               </div>
             </header>

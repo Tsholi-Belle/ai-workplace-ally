@@ -600,6 +600,26 @@ export function MeetingsManager() {
               prev.map((n) => (n.meetingId === id ? { ...n, read: true } : n)),
             );
           }}
+          onDeclineInvite={(id, title) => {
+            setNotifications((prev) =>
+              prev.filter(
+                (n) => !(n.meetingId === id && n.kind === "invite" && n.invitePending),
+              ),
+            );
+            try {
+              const raw = localStorage.getItem("wpa:invites:declined");
+              const declined = raw ? (JSON.parse(raw) as string[]) : [];
+              if (!declined.includes(id)) {
+                localStorage.setItem(
+                  "wpa:invites:declined",
+                  JSON.stringify([id, ...declined].slice(0, 200)),
+                );
+              }
+            } catch {
+              // ignore
+            }
+            toast.success(`Declined: ${title}`);
+          }}
         />
         <ReminderSettings
           enabled={reminderEnabled}
@@ -768,12 +788,14 @@ function NotificationsPanel({
   onMarkAllRead,
   onClear,
   onOpenMeeting,
+  onDeclineInvite,
 }: {
   notifications: NotificationItem[];
   unread: number;
   onMarkAllRead: () => void;
   onClear: () => void;
   onOpenMeeting: (id: string) => void;
+  onDeclineInvite?: (meetingId: string, title: string) => void;
 }) {
   return (
     <Popover>
@@ -807,28 +829,47 @@ function NotificationsPanel({
             </p>
           ) : (
             notifications.map((n) => (
-              <button
+              <div
                 key={n.id}
-                onClick={() => n.meetingId && onOpenMeeting(n.meetingId)}
-                className={`w-full border-b border-border/40 px-3 py-2.5 text-left transition-colors hover:bg-muted/40 ${
+                className={`w-full border-b border-border/40 px-3 py-2.5 transition-colors hover:bg-muted/40 ${
                   !n.read ? "bg-primary/5" : ""
                 }`}
               >
-                <div className="flex items-start gap-2">
-                  <div
-                    className={`mt-1 h-2 w-2 flex-shrink-0 rounded-full ${
-                      !n.read ? "bg-primary" : "bg-transparent"
-                    }`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{n.title}</p>
-                    {n.body && <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>}
-                    <p className="mt-1 text-[10px] text-muted-foreground">
-                      {new Date(n.ts).toLocaleString()}
-                    </p>
+                <button
+                  onClick={() => n.meetingId && onOpenMeeting(n.meetingId)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-start gap-2">
+                    <div
+                      className={`mt-1 h-2 w-2 flex-shrink-0 rounded-full ${
+                        !n.read ? "bg-primary" : "bg-transparent"
+                      }`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{n.title}</p>
+                      {n.body && <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>}
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        {new Date(n.ts).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+                {n.kind === "invite" && n.invitePending && n.meetingId && (
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeclineInvite?.(n.meetingId!, n.title);
+                      }}
+                    >
+                      <X className="mr-1 h-3 w-3" /> Decline
+                    </Button>
+                  </div>
+                )}
+              </div>
             ))
           )}
         </div>
