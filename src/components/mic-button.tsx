@@ -45,7 +45,8 @@ export function MicButton({ onAppend, className, size = "icon", label }: MicButt
       size={size}
       onClick={handleClick}
       className={cn(
-        listening && "bg-red-500 hover:bg-red-500/90 text-white animate-pulse border-red-500",
+        listening &&
+          "bg-fuchsia-600 hover:bg-fuchsia-600/90 text-white border-fuchsia-600 shadow-[0_0_0_4px_rgba(217,70,239,0.25)] animate-pulse",
         className,
       )}
       aria-label={listening ? "Stop voice input" : "Start voice input"}
