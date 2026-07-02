@@ -17,7 +17,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InviteBell } from "@/components/invite-bell";
 import { useTheme } from "@/hooks/use-theme";
-import { useTheme } from "@/hooks/use-theme";
 
 function NotFoundComponent() {
   return (
