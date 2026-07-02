@@ -600,6 +600,26 @@ export function MeetingsManager() {
               prev.map((n) => (n.meetingId === id ? { ...n, read: true } : n)),
             );
           }}
+          onDeclineInvite={(id, title) => {
+            setNotifications((prev) =>
+              prev.filter(
+                (n) => !(n.meetingId === id && n.kind === "invite" && n.invitePending),
+              ),
+            );
+            try {
+              const raw = localStorage.getItem("wpa:invites:declined");
+              const declined = raw ? (JSON.parse(raw) as string[]) : [];
+              if (!declined.includes(id)) {
+                localStorage.setItem(
+                  "wpa:invites:declined",
+                  JSON.stringify([id, ...declined].slice(0, 200)),
+                );
+              }
+            } catch {
+              // ignore
+            }
+            toast.success(`Declined: ${title}`);
+          }}
         />
         <ReminderSettings
           enabled={reminderEnabled}
