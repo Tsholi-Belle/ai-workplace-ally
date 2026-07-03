@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileText, ListChecks, Search, ArrowRight, Sparkles, Languages, Video } from "lucide-react";
+import { FileText, ListChecks, Search, ArrowRight, Languages, Video } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AiDisclaimer } from "@/components/ai-disclaimer";
 
@@ -53,10 +53,6 @@ function Dashboard() {
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
         <div className="absolute -bottom-24 -left-20 h-64 w-64 rounded-full bg-primary-glow/20 blur-3xl" />
         <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/60 px-3 py-1 text-xs text-muted-foreground backdrop-blur">
-            <Sparkles className="h-3 w-3 text-primary-glow" />
-            Powered by Lovable AI
-          </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
             Automate the busywork.
             <br />
