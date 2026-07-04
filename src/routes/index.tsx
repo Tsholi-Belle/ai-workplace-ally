@@ -59,7 +59,7 @@ function Dashboard() {
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Workspace</p>
-          <h1 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">Good to see you back</h1>
+          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl" style={{ fontFamily: '"Roboto", sans-serif' }}>Good to see you back</h1>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button asChild variant="outline" size="sm">
