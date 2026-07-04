@@ -230,6 +230,11 @@ function normalizeAttendees(list: unknown): Attendee[] {
 }
 
 export function MeetingsManager() {
+  const { user } = useAuth();
+  const isGoogleUser = Boolean(
+    user?.app_metadata?.provider === "google" ||
+      user?.identities?.some((i) => i.provider === "google"),
+  );
   const [meetings, setMeetingsRaw] = useLocalStorage<Meeting[]>("wpa:meetings:list", []);
   const [activeId, setActiveId] = useLocalStorage<string | null>("wpa:meetings:active", null);
   const [notifications, setNotifications] = useLocalStorage<NotificationItem[]>(
