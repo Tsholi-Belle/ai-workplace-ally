@@ -689,7 +689,8 @@ export function MeetingsManager() {
                 variant="outline"
                 className="w-full justify-start"
                 onClick={() => calendarMut.mutate()}
-                disabled={calendarMut.isPending}
+                disabled={calendarMut.isPending || !isGoogleUser}
+                title={isGoogleUser ? undefined : "Sign in with Google to import from Google Calendar"}
               >
                 {calendarMut.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -698,6 +699,11 @@ export function MeetingsManager() {
                 )}
                 Google Calendar
               </Button>
+              {!isGoogleUser && (
+                <p className="text-xs text-muted-foreground">
+                  Sign in with Google to import from Google Calendar.
+                </p>
+              )}
               <Button
                 variant="outline"
                 className="w-full justify-start"
