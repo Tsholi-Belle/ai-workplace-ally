@@ -416,7 +416,12 @@ export function MeetingsManager() {
   // -------- Imports --------
   const fetchEvents = useServerFn(fetchCalendarEvents);
   const calendarMut = useMutation({
-    mutationFn: async () => fetchEvents({ data: { daysAhead: 14 } }),
+    mutationFn: async () => {
+      if (!isGoogleUser) {
+        throw new Error("Sign in with Google to import from Google Calendar.");
+      }
+      return fetchEvents({ data: { daysAhead: 14 } });
+    },
     onSuccess: (res) => {
       let added = 0;
       for (const ev of res.events) {
