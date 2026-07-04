@@ -74,6 +74,7 @@ import {
 import { MicButton } from "@/components/mic-button";
 import { AiDisclaimer } from "@/components/ai-disclaimer";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useAuth } from "@/hooks/use-auth";
 import {
   useBrowserNotifications,
   useMeetingReminders,
