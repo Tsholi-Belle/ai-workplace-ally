@@ -74,6 +74,7 @@ import {
 import { MicButton } from "@/components/mic-button";
 import { AiDisclaimer } from "@/components/ai-disclaimer";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useAuth } from "@/hooks/use-auth";
 import {
   useBrowserNotifications,
   useMeetingReminders,
@@ -229,6 +230,11 @@ function normalizeAttendees(list: unknown): Attendee[] {
 }
 
 export function MeetingsManager() {
+  const { user } = useAuth();
+  const isGoogleUser = Boolean(
+    user?.app_metadata?.provider === "google" ||
+      user?.identities?.some((i) => i.provider === "google"),
+  );
   const [meetings, setMeetingsRaw] = useLocalStorage<Meeting[]>("wpa:meetings:list", []);
   const [activeId, setActiveId] = useLocalStorage<string | null>("wpa:meetings:active", null);
   const [notifications, setNotifications] = useLocalStorage<NotificationItem[]>(
@@ -410,7 +416,12 @@ export function MeetingsManager() {
   // -------- Imports --------
   const fetchEvents = useServerFn(fetchCalendarEvents);
   const calendarMut = useMutation({
-    mutationFn: async () => fetchEvents({ data: { daysAhead: 14 } }),
+    mutationFn: async () => {
+      if (!isGoogleUser) {
+        throw new Error("Sign in with Google to import from Google Calendar.");
+      }
+      return fetchEvents({ data: { daysAhead: 14 } });
+    },
     onSuccess: (res) => {
       let added = 0;
       for (const ev of res.events) {
@@ -683,7 +694,8 @@ export function MeetingsManager() {
                 variant="outline"
                 className="w-full justify-start"
                 onClick={() => calendarMut.mutate()}
-                disabled={calendarMut.isPending}
+                disabled={calendarMut.isPending || !isGoogleUser}
+                title={isGoogleUser ? undefined : "Sign in with Google to import from Google Calendar"}
               >
                 {calendarMut.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -692,6 +704,11 @@ export function MeetingsManager() {
                 )}
                 Google Calendar
               </Button>
+              {!isGoogleUser && (
+                <p className="text-xs text-muted-foreground">
+                  Sign in with Google to import from Google Calendar.
+                </p>
+              )}
               <Button
                 variant="outline"
                 className="w-full justify-start"
