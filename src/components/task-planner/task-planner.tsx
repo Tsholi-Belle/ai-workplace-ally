@@ -574,7 +574,14 @@ function TasksSection({
   });
 
   const updateMut = useMutation({
-    mutationFn: (v: Parameters<typeof update>[0]["data"]) => update({ data: v }),
+    mutationFn: (v: {
+      id: string;
+      status?: Status;
+      remindersEnabled?: boolean;
+      dueDate?: string | null;
+      assigneeMemberId?: string | null;
+      title?: string;
+    }) => update({ data: v }),
     onSuccess: onChange,
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
