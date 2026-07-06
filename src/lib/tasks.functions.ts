@@ -73,7 +73,16 @@ export const updateTask = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      title?: string;
+      description?: string | null;
+      category?: string | null;
+      assignee_member_id?: string | null;
+      due_date?: string | null;
+      status?: "todo" | "in_progress" | "done";
+      completed_at?: string | null;
+      reminders_enabled?: boolean;
+    } = {};
     if (data.title !== undefined) patch.title = data.title;
     if (data.description !== undefined) patch.description = data.description;
     if (data.category !== undefined) patch.category = data.category;
