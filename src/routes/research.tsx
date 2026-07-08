@@ -22,6 +22,19 @@ function ResearchPage() {
         description="Ask a question or describe a topic. AI returns a structured briefing with key points, perspectives, and open questions."
         icon={<Search className="h-5 w-5" />}
       />
+      <FeatureInstructions
+        featureKey="research"
+        title="How the Research Assistant works"
+        steps={[
+          "Type a question or paste a topic in the left panel — be as specific as you can.",
+          "Click Research. AI returns a briefing with key points, different perspectives, and open questions.",
+          "Edit, copy, or regenerate the briefing as needed.",
+        ]}
+        tips={[
+          "Ask comparison questions (X vs Y) to get side-by-side trade-offs.",
+          "Follow up by refining the prompt and regenerating for a deeper dive.",
+        ]}
+      />
       <AiWorkspace
         kind="research"
         inputLabel="Research question or topic"
