@@ -78,6 +78,20 @@ function Dashboard() {
         </div>
       </div>
 
+      <FeatureInstructions
+        featureKey="dashboard"
+        title="Welcome to your Workplace Ally"
+        steps={[
+          "Use Quick actions to jump into meetings, notes, tasks, research, or translation.",
+          "Upcoming shows your next meetings; Recent activity shows what you've worked on lately.",
+          "Every feature has its own How to use guide — expand it any time from the help button.",
+        ]}
+        tips={[
+          "Your task planner and meetings sync to your account, so they follow you across devices.",
+          "Click Do not show this again on any guide to hide it once you're comfortable.",
+        ]}
+      />
+
       {/* Stat tiles */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
