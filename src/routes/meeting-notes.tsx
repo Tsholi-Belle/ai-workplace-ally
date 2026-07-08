@@ -22,6 +22,19 @@ function MeetingNotesPage() {
         description="Paste raw meeting notes or a transcript. AI returns a clean summary with decisions, action items, and follow-ups."
         icon={<FileText className="h-5 w-5" />}
       />
+      <FeatureInstructions
+        featureKey="meeting-notes"
+        title="How to summarise meeting notes"
+        steps={[
+          "Paste your raw notes or transcript into the left panel — the messier the better, AI will clean it up.",
+          "Click Summarise. The AI returns a structured summary with decisions, action items, and follow-ups.",
+          "Use Edit to tweak the output, Copy to grab it, or Regenerate for a fresh take.",
+        ]}
+        tips={[
+          "Use the microphone button to dictate notes instead of typing.",
+          "Try the sample standup to see the expected input shape.",
+        ]}
+      />
       <AiWorkspace
         kind="meeting-notes"
         inputLabel="Raw notes or transcript"
