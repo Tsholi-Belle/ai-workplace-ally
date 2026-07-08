@@ -26,6 +26,20 @@ function MeetingsPage() {
         description="Add or import meetings, join with one click, take notes (typed or dictated), and get an AI summary with action items."
         icon={<Video className="h-5 w-5" />}
       />
+      <FeatureInstructions
+        featureKey="meetings"
+        title="How to run a meeting here"
+        steps={[
+          "Add a meeting with its title, time, and Zoom/Meet/Teams link — or import from your calendar.",
+          "When it's time, click Join to open the call in a new tab.",
+          "Take live notes in the notes panel — type or tap the mic to dictate.",
+          "After the call, generate an AI summary with decisions and action items.",
+        ]}
+        tips={[
+          "Attach files or links to a meeting to keep everything in one place.",
+          "Export the summary to share with people who missed it.",
+        ]}
+      />
       <MeetingsManager />
     </div>
   );
