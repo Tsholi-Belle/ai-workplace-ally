@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
-import { PageHeader } from "@/components/page-header";
 import { AiWorkspace } from "@/components/ai-workspace";
+import { FeatureInstructions } from "@/components/feature-instructions";
 
 export const Route = createFileRoute("/meeting-notes")({
   head: () => ({
