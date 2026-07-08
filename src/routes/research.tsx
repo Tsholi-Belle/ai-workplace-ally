@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { AiWorkspace } from "@/components/ai-workspace";
+import { FeatureInstructions } from "@/components/feature-instructions";
 
 export const Route = createFileRoute("/research")({
   head: () => ({
