@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Video } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { MeetingsManager } from "@/components/meetings-manager";
+import { FeatureInstructions } from "@/components/feature-instructions";
 
 export const Route = createFileRoute("/meetings")({
   head: () => ({
