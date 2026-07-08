@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Languages } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Translator } from "@/components/translator";
+import { FeatureInstructions } from "@/components/feature-instructions";
 
 export const Route = createFileRoute("/translate")({
   head: () => ({
