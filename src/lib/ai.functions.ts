@@ -90,6 +90,31 @@ export const translateText = createServerFn({ method: "POST" })
       ? `\nGlossary (use these translations exactly):\n${data.glossary.trim()}`
       : "";
 
+    const SA_LANGUAGES = new Set([
+      "Afrikaans",
+      "Zulu (isiZulu)",
+      "Xhosa (isiXhosa)",
+      "Southern Sotho (Sesotho)",
+      "Northern Sotho (Sepedi)",
+      "Tswana (Setswana)",
+      "Swati (siSwati)",
+      "Venda (Tshivenda)",
+      "Tsonga (Xitsonga)",
+      "Ndebele (isiNdebele)",
+      "South African English",
+    ]);
+
+    const saGuidance = SA_LANGUAGES.has(data.targetLanguage)
+      ? `\nThis is a South African official language. Follow the conventions used by Google Translate and the PanSALB-endorsed standard orthography:
+- Use the modern standard spelling and diacritics (e.g. Sesotho "ê", "ô"; Tshivenda "ṱ", "ḓ", "ṅ"; Xitsonga "x", "hl"; isiZulu/isiXhosa click letters c/q/x).
+- Respect noun-class concord agreements and subject/object concords rather than translating word-for-word from English.
+- Use conjunctive writing for the Nguni languages (isiZulu, isiXhosa, siSwati, isiNdebele) and disjunctive writing for the Sotho-Tswana languages (Sesotho, Sepedi, Setswana).
+- Prefer widely-understood standard vocabulary over regional dialect; keep loanwords only where they are the established term.
+- For "South African English", use SA English spelling and idiom (e.g. "colour", "organise", "robot" for traffic light, "petrol" not "gas").
+Match Google Translate's phrasing where it is idiomatic and natural; do not invent words.`
+      : "";
+
+
     const system = `You are a professional translator.
 Translate the user's text into ${data.targetLanguage}.
 ${toneLine}
@@ -97,7 +122,7 @@ ${formattingLine}
 Preserve meaning, names, and numbers.
 Do NOT add commentary, transliteration, or explanations.
 If the source is already in ${data.targetLanguage}, return it unchanged.
-Return ONLY the translated text.${glossaryLine}`;
+Return ONLY the translated text.${saGuidance}${glossaryLine}`;
 
     const gateway = createLovableAiGatewayProvider(key);
     const { text } = await generateText({
