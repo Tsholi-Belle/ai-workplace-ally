@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TranslateRouteImport } from './routes/translate'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ResearchRouteImport } from './routes/research'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MeetingsRouteImport } from './routes/meetings'
@@ -23,6 +24,11 @@ import { Route as AuthenticatedTaskPlannerRouteImport } from './routes/_authenti
 const TranslateRoute = TranslateRouteImport.update({
   id: '/translate',
   path: '/translate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResearchRoute = ResearchRouteImport.update({
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/meetings': typeof MeetingsRoute
   '/privacy': typeof PrivacyRoute
   '/research': typeof ResearchRoute
+  '/terms': typeof TermsRoute
   '/translate': typeof TranslateRoute
   '/task-planner': typeof AuthenticatedTaskPlannerRoute
 }
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/meetings': typeof MeetingsRoute
   '/privacy': typeof PrivacyRoute
   '/research': typeof ResearchRoute
+  '/terms': typeof TermsRoute
   '/translate': typeof TranslateRoute
   '/task-planner': typeof AuthenticatedTaskPlannerRoute
 }
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/meetings': typeof MeetingsRoute
   '/privacy': typeof PrivacyRoute
   '/research': typeof ResearchRoute
+  '/terms': typeof TermsRoute
   '/translate': typeof TranslateRoute
   '/_authenticated/task-planner': typeof AuthenticatedTaskPlannerRoute
 }
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/privacy'
     | '/research'
+    | '/terms'
     | '/translate'
     | '/task-planner'
   fileRoutesByTo: FileRoutesByTo
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/privacy'
     | '/research'
+    | '/terms'
     | '/translate'
     | '/task-planner'
   id:
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/meetings'
     | '/privacy'
     | '/research'
+    | '/terms'
     | '/translate'
     | '/_authenticated/task-planner'
   fileRoutesById: FileRoutesById
@@ -152,6 +164,7 @@ export interface RootRouteChildren {
   MeetingsRoute: typeof MeetingsRoute
   PrivacyRoute: typeof PrivacyRoute
   ResearchRoute: typeof ResearchRoute
+  TermsRoute: typeof TermsRoute
   TranslateRoute: typeof TranslateRoute
 }
 
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/translate'
       fullPath: '/translate'
       preLoaderRoute: typeof TranslateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/research': {
@@ -250,6 +270,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeetingsRoute: MeetingsRoute,
   PrivacyRoute: PrivacyRoute,
   ResearchRoute: ResearchRoute,
+  TermsRoute: TermsRoute,
   TranslateRoute: TranslateRoute,
 }
 export const routeTree = rootRouteImport
