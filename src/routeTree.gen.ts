@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TranslateRouteImport } from './routes/translate'
 import { Route as ResearchRouteImport } from './routes/research'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MeetingsRouteImport } from './routes/meetings'
 import { Route as MeetingNotesRouteImport } from './routes/meeting-notes'
 import { Route as InviteRouteImport } from './routes/invite'
@@ -27,6 +28,11 @@ const TranslateRoute = TranslateRouteImport.update({
 const ResearchRoute = ResearchRouteImport.update({
   id: '/research',
   path: '/research',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeetingsRoute = MeetingsRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/invite': typeof InviteRoute
   '/meeting-notes': typeof MeetingNotesRoute
   '/meetings': typeof MeetingsRoute
+  '/privacy': typeof PrivacyRoute
   '/research': typeof ResearchRoute
   '/translate': typeof TranslateRoute
   '/task-planner': typeof AuthenticatedTaskPlannerRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/invite': typeof InviteRoute
   '/meeting-notes': typeof MeetingNotesRoute
   '/meetings': typeof MeetingsRoute
+  '/privacy': typeof PrivacyRoute
   '/research': typeof ResearchRoute
   '/translate': typeof TranslateRoute
   '/task-planner': typeof AuthenticatedTaskPlannerRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/invite': typeof InviteRoute
   '/meeting-notes': typeof MeetingNotesRoute
   '/meetings': typeof MeetingsRoute
+  '/privacy': typeof PrivacyRoute
   '/research': typeof ResearchRoute
   '/translate': typeof TranslateRoute
   '/_authenticated/task-planner': typeof AuthenticatedTaskPlannerRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/invite'
     | '/meeting-notes'
     | '/meetings'
+    | '/privacy'
     | '/research'
     | '/translate'
     | '/task-planner'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/invite'
     | '/meeting-notes'
     | '/meetings'
+    | '/privacy'
     | '/research'
     | '/translate'
     | '/task-planner'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/invite'
     | '/meeting-notes'
     | '/meetings'
+    | '/privacy'
     | '/research'
     | '/translate'
     | '/_authenticated/task-planner'
@@ -138,6 +150,7 @@ export interface RootRouteChildren {
   InviteRoute: typeof InviteRoute
   MeetingNotesRoute: typeof MeetingNotesRoute
   MeetingsRoute: typeof MeetingsRoute
+  PrivacyRoute: typeof PrivacyRoute
   ResearchRoute: typeof ResearchRoute
   TranslateRoute: typeof TranslateRoute
 }
@@ -156,6 +169,13 @@ declare module '@tanstack/react-router' {
       path: '/research'
       fullPath: '/research'
       preLoaderRoute: typeof ResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/meetings': {
@@ -228,6 +248,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteRoute: InviteRoute,
   MeetingNotesRoute: MeetingNotesRoute,
   MeetingsRoute: MeetingsRoute,
+  PrivacyRoute: PrivacyRoute,
   ResearchRoute: ResearchRoute,
   TranslateRoute: TranslateRoute,
 }
