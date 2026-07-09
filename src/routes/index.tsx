@@ -27,10 +27,10 @@ export const Route = createFileRoute("/")({
 });
 
 const stats = [
-  { label: "Meetings this week", value: "8", delta: "+2", icon: Video, tint: "bg-[oklch(0.68_0.24_0/0.12)] text-[oklch(0.68_0.24_0)]" },
-  { label: "Open tasks", value: "14", delta: "-3", icon: ListChecks, tint: "bg-[oklch(0.6_0.2_285/0.12)] text-[oklch(0.6_0.2_285)]" },
-  { label: "Notes captured", value: "27", delta: "+5", icon: FileText, tint: "bg-[oklch(0.78_0.13_230/0.14)] text-[oklch(0.5_0.16_230)]" },
-  { label: "Hours saved", value: "6.2", delta: "+1.1", icon: TrendingUp, tint: "bg-[oklch(0.55_0.18_160/0.12)] text-[oklch(0.5_0.18_160)]" },
+  { label: "Meetings this week", placeholder: "0", icon: Video, tint: "bg-[oklch(0.68_0.24_0/0.12)] text-[oklch(0.68_0.24_0)]" },
+  { label: "Open tasks", placeholder: "0", icon: ListChecks, tint: "bg-[oklch(0.6_0.2_285/0.12)] text-[oklch(0.6_0.2_285)]" },
+  { label: "Notes captured", placeholder: "0", icon: FileText, tint: "bg-[oklch(0.78_0.13_230/0.14)] text-[oklch(0.5_0.16_230)]" },
+  { label: "Hours saved", placeholder: "0.0", icon: TrendingUp, tint: "bg-[oklch(0.55_0.18_160/0.12)] text-[oklch(0.5_0.18_160)]" },
 ] as const;
 
 const quickActions = [
@@ -41,16 +41,15 @@ const quickActions = [
   { title: "Translate", icon: Languages, url: "/translate" },
 ] as const;
 
-const upcoming = [
-  { title: "Product sync", when: "Today · 2:00 PM", who: "5 people", color: "bg-[oklch(0.68_0.24_0)]" },
-  { title: "Design review", when: "Today · 4:30 PM", who: "3 people", color: "bg-[oklch(0.6_0.2_285)]" },
-  { title: "1:1 with Sam", when: "Tomorrow · 10:00 AM", who: "2 people", color: "bg-[oklch(0.78_0.13_230)]" },
+const upcomingPlaceholders = [
+  { title: "Meeting title goes here", when: "Day · Time", who: "example@email.com" },
+  { title: "Another scheduled meeting", when: "Day · Time", who: "teammate@email.com" },
 ] as const;
 
-const recent = [
-  { title: "Q3 planning notes", meta: "Meeting Notes · 2h ago", icon: FileText },
-  { title: "Onboarding revamp", meta: "Task Planner · yesterday", icon: ListChecks },
-  { title: "Competitor landscape", meta: "Research · 2d ago", icon: Search },
+const recentPlaceholders = [
+  { title: "Your recent notes will appear here", meta: "Meeting Notes · —", icon: FileText },
+  { title: "Your planned tasks will appear here", meta: "Task Planner · —", icon: ListChecks },
+  { title: "Your research briefings will appear here", meta: "Research · —", icon: Search },
 ] as const;
 
 function Dashboard() {
@@ -60,7 +59,7 @@ function Dashboard() {
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Workspace</p>
-          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl" style={{ fontFamily: '"Roboto", sans-serif' }}>Good to see you back</h1>
+          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl" style={{ fontFamily: '"Roboto", sans-serif' }}>Welcome to your workspace</h1>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button asChild variant="outline" size="sm">
@@ -92,27 +91,26 @@ function Dashboard() {
         ]}
       />
 
-      {/* Stat tiles */}
+      {/* Stat tiles — empty state placeholders */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
-          <Card key={s.label} className="shadow-card">
+          <Card key={s.label} className="shadow-card opacity-60">
             <CardContent className="flex items-center gap-3 p-4">
-              <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${s.tint}`}>
+              <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${s.tint} opacity-70`}>
                 <s.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl font-semibold tabular-nums">{s.value}</span>
-                  <span className="text-xs font-medium text-muted-foreground">{s.delta}</span>
+                  <span className="text-xl font-semibold tabular-nums text-muted-foreground/70">{s.placeholder}</span>
                 </div>
-                <p className="truncate text-xs text-muted-foreground">{s.label}</p>
+                <p className="truncate text-xs text-muted-foreground/70">{s.label}</p>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Quick actions */}
+      {/* Quick actions — these stay interactive so users can get started */}
       <Card className="shadow-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-muted-foreground">Quick actions</CardTitle>
@@ -133,7 +131,7 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Two-column panels */}
+      {/* Two-column panels — greyed-out placeholders */}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="shadow-card lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -141,23 +139,26 @@ function Dashboard() {
             <Link to="/meetings" className="text-xs text-primary-glow hover:underline">View all</Link>
           </CardHeader>
           <CardContent className="space-y-2">
-            {upcoming.map((m) => (
-              <Link
+            {upcomingPlaceholders.map((m) => (
+              <div
                 key={m.title}
-                to="/meetings"
-                className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/40 p-3 transition-all hover:border-primary/50 hover:bg-accent/30"
+                aria-disabled="true"
+                className="pointer-events-none flex select-none items-center gap-3 rounded-lg border border-dashed border-border/50 bg-background/20 p-3 opacity-60"
               >
-                <span className={`h-10 w-1 shrink-0 rounded-full ${m.color}`} />
+                <span className="h-10 w-1 shrink-0 rounded-full bg-muted-foreground/30" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{m.title}</p>
-                  <p className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <p className="truncate text-sm font-medium text-muted-foreground/70">{m.title}</p>
+                  <p className="flex items-center gap-3 text-xs text-muted-foreground/60">
                     <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{m.when}</span>
                     <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{m.who}</span>
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </Link>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+              </div>
             ))}
+            <p className="pt-1 text-center text-xs text-muted-foreground/70">
+              No meetings yet — schedule one to see it here.
+            </p>
           </CardContent>
         </Card>
 
@@ -166,20 +167,24 @@ function Dashboard() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Recent activity</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {recent.map((r) => (
+            {recentPlaceholders.map((r) => (
               <div
                 key={r.title}
-                className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/40 p-3"
+                aria-disabled="true"
+                className="pointer-events-none flex select-none items-center gap-3 rounded-lg border border-dashed border-border/50 bg-background/20 p-3 opacity-60"
               >
-                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-muted text-foreground/70">
+                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-muted/60 text-muted-foreground/60">
                   <r.icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{r.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">{r.meta}</p>
+                  <p className="truncate text-sm font-medium text-muted-foreground/70">{r.title}</p>
+                  <p className="truncate text-xs text-muted-foreground/60">{r.meta}</p>
                 </div>
               </div>
             ))}
+            <p className="pt-1 text-center text-xs text-muted-foreground/70">
+              No activity yet — start working to see it here.
+            </p>
           </CardContent>
         </Card>
       </div>
