@@ -122,7 +122,7 @@ ${formattingLine}
 Preserve meaning, names, and numbers.
 Do NOT add commentary, transliteration, or explanations.
 If the source is already in ${data.targetLanguage}, return it unchanged.
-Return ONLY the translated text.${glossaryLine}`;
+Return ONLY the translated text.${saGuidance}${glossaryLine}`;
 
     const gateway = createLovableAiGatewayProvider(key);
     const { text } = await generateText({
