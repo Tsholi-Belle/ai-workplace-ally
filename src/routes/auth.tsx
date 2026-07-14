@@ -45,13 +45,45 @@ function AuthPage() {
   async function handleEmail(mode: "signin" | "signup") {
     setBusy(true);
     try {
-      const fn = mode === "signin" ? supabase.auth.signInWithPassword({ email, password })
-        : supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
-      const { error } = await fn;
-      if (error) throw error;
-      toast.success(mode === "signin" ? "Signed in" : "Check your email to confirm");
+      if (mode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        toast.success("Signed in");
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        // When email confirmation is required, Supabase returns a user with no session.
+        if (data.user && !data.session) {
+          setPendingEmail(email);
+          toast.success("Verification email sent");
+        } else {
+          toast.success("Account created");
+        }
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Auth failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendVerification() {
+    if (!pendingEmail) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: pendingEmail,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) throw error;
+      toast.success("Verification email resent");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not resend");
     } finally {
       setBusy(false);
     }
