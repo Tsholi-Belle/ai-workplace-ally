@@ -31,6 +31,7 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && user) {
@@ -45,13 +46,45 @@ function AuthPage() {
   async function handleEmail(mode: "signin" | "signup") {
     setBusy(true);
     try {
-      const fn = mode === "signin" ? supabase.auth.signInWithPassword({ email, password })
-        : supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
-      const { error } = await fn;
-      if (error) throw error;
-      toast.success(mode === "signin" ? "Signed in" : "Check your email to confirm");
+      if (mode === "signin") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        toast.success("Signed in");
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) throw error;
+        // When email confirmation is required, Supabase returns a user with no session.
+        if (data.user && !data.session) {
+          setPendingEmail(email);
+          toast.success("Verification email sent");
+        } else {
+          toast.success("Account created");
+        }
+      }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Auth failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function resendVerification() {
+    if (!pendingEmail) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: pendingEmail,
+        options: { emailRedirectTo: window.location.origin },
+      });
+      if (error) throw error;
+      toast.success("Verification email resent");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not resend");
     } finally {
       setBusy(false);
     }
@@ -104,6 +137,17 @@ function AuthPage() {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
           </div>
+          {pendingEmail && (
+            <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+              <p className="font-medium">Verify your email</p>
+              <p className="text-muted-foreground mt-1">
+                We sent a verification link to <span className="font-medium text-foreground">{pendingEmail}</span>. Click it to activate your account before signing in.
+              </p>
+              <Button variant="link" className="h-auto p-0 mt-1 text-xs" onClick={resendVerification} disabled={busy}>
+                Resend verification email
+              </Button>
+            </div>
+          )}
           <Tabs defaultValue="signin">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
