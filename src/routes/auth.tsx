@@ -137,6 +137,17 @@ function AuthPage() {
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
           </div>
+          {pendingEmail && (
+            <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
+              <p className="font-medium">Verify your email</p>
+              <p className="text-muted-foreground mt-1">
+                We sent a verification link to <span className="font-medium text-foreground">{pendingEmail}</span>. Click it to activate your account before signing in.
+              </p>
+              <Button variant="link" className="h-auto p-0 mt-1 text-xs" onClick={resendVerification} disabled={busy}>
+                Resend verification email
+              </Button>
+            </div>
+          )}
           <Tabs defaultValue="signin">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
