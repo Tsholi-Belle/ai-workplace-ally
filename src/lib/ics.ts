@@ -299,12 +299,21 @@ export function parseIcs(input: string, opts: ParseIcsOptions = {}): IcsEvent[] 
   return events;
 }
 
+export const MEETING_URL_RE =
+  /https?:\/\/[^\s)<>"']*?(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|webex\.com|gotomeet\.me|whereby\.com|meet\.jit\.si|chime\.aws)[^\s)<>"']*/i;
+
 export function detectJoinUrl(text: string): string {
-  const m = text.match(
-    /https?:\/\/[^\s)<>"']+(zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|webex\.com|gotomeet\.me|whereby\.com)[^\s)<>"']*/i,
-  );
-  return m ? m[0] : "";
+  // ICS descriptions are often HTML-ish and entity-encoded.
+  const cleaned = text
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+  const m = cleaned.match(MEETING_URL_RE);
+  // Trim trailing punctuation that commonly follows a link in prose.
+  return m ? m[0].replace(/[.,;:!]+$/, "") : "";
 }
+
 
 // ---------- Writer: "Add to my calendar" ----------
 
