@@ -516,9 +516,12 @@ export function MeetingsManager() {
       const id = ev.uid ? `ics:${ev.uid}` : `ics:${crypto.randomUUID()}`;
       if (meetingsNorm.some((m) => m.id === id)) continue;
       const join =
+        ev.conferenceUrl ||
+        detectJoinUrl(`${ev.description ?? ""} ${ev.location ?? ""} ${ev.url ?? ""}`) ||
+        (ev.location && /^https?:/.test(ev.location) ? ev.location : "") ||
         ev.url ||
-        detectJoinUrl(`${ev.description ?? ""} ${ev.location ?? ""}`) ||
-        (ev.location && /^https?:/.test(ev.location) ? ev.location : "");
+        "";
+
       const attendeeList: Attendee[] = [];
       if (ev.organizer) attendeeList.push({ name: ev.organizer, role: "owner" });
       for (const a of ev.attendees) {

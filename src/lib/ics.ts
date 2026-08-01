@@ -10,9 +10,12 @@ export interface IcsEvent {
   description?: string;
   location?: string;
   url?: string;
+  /** Video-conference link from X-GOOGLE-CONFERENCE / CONFERENCE properties. */
+  conferenceUrl?: string;
   start?: string; // ISO
   end?: string; // ISO
   attendees: string[];
+
   organizer?: string;
   /** Set when this event is one expanded instance of a recurring series. */
   recurrence?: {
@@ -267,8 +270,13 @@ export function parseIcs(input: string, opts: ParseIcsOptions = {}): IcsEvent[] 
         cur.location = unescapeText(value);
         break;
       case "URL":
-        cur.url = value;
+        cur.url = value.trim();
         break;
+      case "X-GOOGLE-CONFERENCE":
+      case "CONFERENCE":
+        cur.conferenceUrl = value.trim();
+        break;
+
       case "DTSTART":
         cur.start = parseIcsDate(value);
         break;
@@ -291,12 +299,21 @@ export function parseIcs(input: string, opts: ParseIcsOptions = {}): IcsEvent[] 
   return events;
 }
 
+export const MEETING_URL_RE =
+  /https?:\/\/[^\s)<>"']*?(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|webex\.com|gotomeet\.me|whereby\.com|meet\.jit\.si|chime\.aws)[^\s)<>"']*/i;
+
 export function detectJoinUrl(text: string): string {
-  const m = text.match(
-    /https?:\/\/[^\s)<>"']+(zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|webex\.com|gotomeet\.me|whereby\.com)[^\s)<>"']*/i,
-  );
-  return m ? m[0] : "";
+  // ICS descriptions are often HTML-ish and entity-encoded.
+  const cleaned = text
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+  const m = cleaned.match(MEETING_URL_RE);
+  // Trim trailing punctuation that commonly follows a link in prose.
+  return m ? m[0].replace(/[.,;:!]+$/, "") : "";
 }
+
 
 // ---------- Writer: "Add to my calendar" ----------
 
