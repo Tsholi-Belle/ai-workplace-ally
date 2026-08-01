@@ -270,8 +270,13 @@ export function parseIcs(input: string, opts: ParseIcsOptions = {}): IcsEvent[] 
         cur.location = unescapeText(value);
         break;
       case "URL":
-        cur.url = value;
+        cur.url = value.trim();
         break;
+      case "X-GOOGLE-CONFERENCE":
+      case "CONFERENCE":
+        cur.conferenceUrl = value.trim();
+        break;
+
       case "DTSTART":
         cur.start = parseIcsDate(value);
         break;
