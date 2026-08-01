@@ -71,10 +71,11 @@ export const fetchCalendarEvents = createServerFn({ method: "POST" })
       if (!joinUrl) {
         const text = `${ev.description ?? ""} ${ev.location ?? ""}`;
         const match = text.match(
-          /https?:\/\/[^\s)<>"']+(zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|webex\.com|gotomeet\.me|whereby\.com)[^\s)<>"']*/i,
+          /https?:\/\/[^\s)<>"']*?(?:zoom\.us|meet\.google\.com|teams\.microsoft\.com|teams\.live\.com|webex\.com|gotomeet\.me|whereby\.com)[^\s)<>"']*/i,
         );
         if (match) joinUrl = match[0];
       }
+
       return {
         id: ev.id,
         title: ev.summary ?? "(Untitled)",
