@@ -10,9 +10,12 @@ export interface IcsEvent {
   description?: string;
   location?: string;
   url?: string;
+  /** Video-conference link from X-GOOGLE-CONFERENCE / CONFERENCE properties. */
+  conferenceUrl?: string;
   start?: string; // ISO
   end?: string; // ISO
   attendees: string[];
+
   organizer?: string;
   /** Set when this event is one expanded instance of a recurring series. */
   recurrence?: {
