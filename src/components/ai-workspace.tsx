@@ -70,7 +70,6 @@ export function AiWorkspace({ kind, inputLabel, inputPlaceholder, examples, ctaL
             className="min-h-[280px] resize-y font-sans text-sm leading-relaxed"
           />
 
-
           {examples && examples.length > 0 && (
             <div className="flex flex-wrap gap-2">
               <span className="text-xs text-muted-foreground self-center">Try:</span>
@@ -101,7 +100,11 @@ export function AiWorkspace({ kind, inputLabel, inputPlaceholder, examples, ctaL
             >
               Clear
             </Button>
-            <Button onClick={handleRun} disabled={mutation.isPending} className="gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant">
+            <Button
+              onClick={handleRun}
+              disabled={mutation.isPending}
+              className="gradient-primary text-primary-foreground hover:opacity-90 shadow-elegant"
+            >
               {mutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

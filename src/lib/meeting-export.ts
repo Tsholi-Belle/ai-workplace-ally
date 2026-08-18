@@ -177,17 +177,17 @@ export function exportPdf(p: ExportPayload) {
     doc.setFontSize(8);
     doc.setTextColor(...THEME.muted);
     const pageNum = doc.getNumberOfPages();
-    doc.text(
-      `${p.title || "Meeting"}  ·  Page ${pageNum}`,
-      pageW / 2,
-      pageH - margin + 22,
-      { align: "center" },
-    );
+    doc.text(`${p.title || "Meeting"}  ·  Page ${pageNum}`, pageW / 2, pageH - margin + 22, {
+      align: "center",
+    });
   };
 
   // Measure inline run width with the appropriate font.
   const runWidth = (r: InlineRun, baseSize: number) => {
-    doc.setFont("helvetica", r.bold ? (r.italic ? "bolditalic" : "bold") : r.italic ? "italic" : "normal");
+    doc.setFont(
+      "helvetica",
+      r.bold ? (r.italic ? "bolditalic" : "bold") : r.italic ? "italic" : "normal",
+    );
     doc.setFontSize(baseSize);
     if (r.code) {
       doc.setFont("courier", "normal");
@@ -215,11 +215,13 @@ export function exportPdf(p: ExportPayload) {
         }
       }
     }
-    return lines.map((l) => {
-      // trim leading whitespace runs from wrapped lines
-      while (l.length && !/\S/.test(l[0].text)) l.shift();
-      return l;
-    }).filter((l) => l.length > 0);
+    return lines
+      .map((l) => {
+        // trim leading whitespace runs from wrapped lines
+        while (l.length && !/\S/.test(l[0].text)) l.shift();
+        return l;
+      })
+      .filter((l) => l.length > 0);
   };
 
   // Draw a wrapped line at current y, given indent.
@@ -502,12 +504,9 @@ export function exportPdf(p: ExportPayload) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(...THEME.muted);
-    doc.text(
-      `${p.title || "Meeting"}  ·  Page ${i} of ${total}`,
-      pageW / 2,
-      pageH - margin + 22,
-      { align: "center" },
-    );
+    doc.text(`${p.title || "Meeting"}  ·  Page ${i} of ${total}`, pageW / 2, pageH - margin + 22, {
+      align: "center",
+    });
   }
 
   doc.save(`${sanitizeFilename(p.title)}.pdf`);

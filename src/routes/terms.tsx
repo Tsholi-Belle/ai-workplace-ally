@@ -21,10 +21,10 @@ function TermsPage() {
         <p className="text-muted-foreground">Last updated: 9 July 2026</p>
       </header>
       <p>
-        By using Workplace Ally you agree to use the service lawfully, not to attempt to
-        access other users' data, and to accept that AI-generated output may contain
-        inaccuracies and should be reviewed before use. The service is provided "as is"
-        without warranty. We may suspend accounts that violate these terms.
+        By using Workplace Ally you agree to use the service lawfully, not to attempt to access
+        other users' data, and to accept that AI-generated output may contain inaccuracies and
+        should be reviewed before use. The service is provided "as is" without warranty. We may
+        suspend accounts that violate these terms.
       </p>
       <p>
         Your privacy is covered by our{" "}

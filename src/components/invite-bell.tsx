@@ -3,11 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Bell, Inbox, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   ACTIVE_KEY,
   declineInvite,
@@ -50,9 +46,7 @@ export function InviteBell() {
           variant="ghost"
           size="icon"
           className="relative h-8 w-8"
-          aria-label={
-            count > 0 ? `${count} pending invite${count === 1 ? "" : "s"}` : "Invites"
-          }
+          aria-label={count > 0 ? `${count} pending invite${count === 1 ? "" : "s"}` : "Invites"}
         >
           <Bell className="h-4 w-4" />
           {count > 0 && (
@@ -67,11 +61,7 @@ export function InviteBell() {
           <p className="text-sm font-medium flex items-center gap-1.5">
             <Inbox className="h-3.5 w-3.5" /> Pending invites
           </p>
-          {count > 0 && (
-            <span className="text-[10px] text-muted-foreground">
-              {count} waiting
-            </span>
-          )}
+          {count > 0 && <span className="text-[10px] text-muted-foreground">{count} waiting</span>}
         </div>
         <div className="max-h-96 overflow-auto">
           {count === 0 ? (
@@ -80,16 +70,9 @@ export function InviteBell() {
             </p>
           ) : (
             pending.map((n) => (
-              <div
-                key={n.id}
-                className="border-b border-border/40 px-3 py-2.5 last:border-b-0"
-              >
+              <div key={n.id} className="border-b border-border/40 px-3 py-2.5 last:border-b-0">
                 <p className="text-sm font-medium truncate">{n.title}</p>
-                {n.body && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {n.body}
-                  </p>
-                )}
+                {n.body && <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>}
                 <p className="mt-1 text-[10px] text-muted-foreground">
                   {new Date(n.ts).toLocaleString()}
                 </p>
@@ -106,9 +89,7 @@ export function InviteBell() {
                     size="sm"
                     variant="ghost"
                     className="h-7 text-xs text-muted-foreground hover:text-destructive"
-                    onClick={() =>
-                      n.meetingId && handleDecline(n.meetingId, n.title)
-                    }
+                    onClick={() => n.meetingId && handleDecline(n.meetingId, n.title)}
                   >
                     <X className="mr-1 h-3 w-3" /> Decline
                   </Button>

@@ -10,12 +10,13 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportAppError } from "../lib/error-reporting";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InviteBell } from "@/components/invite-bell";
+import { PopiaConsentBanner } from "@/components/popia-consent-banner";
 import { useTheme } from "@/hooks/use-theme";
 
 function NotFoundComponent() {
@@ -44,7 +45,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportAppError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
   return (
@@ -53,9 +54,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
           This page didn't load
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Something went wrong on our end.</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -80,8 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Workplace Ally" },
       {
         name: "description",
-        content:
-          "AI-powered workplace assistant: summarise meetings, plan tasks, and do research.",
+        content: "AI-powered workplace assistant: summarise meetings, plan tasks, and do research.",
       },
       { property: "og:title", content: "Workplace Ally" },
       {
@@ -93,8 +91,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "Your workplace helper, with a few clicks" },
       { property: "og:description", content: "Your workplace helper, with a few clicks" },
       { name: "twitter:description", content: "Your workplace helper, with a few clicks" },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/1f6390f7-d134-43f4-9d42-30d037b49630" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/1f6390f7-d134-43f4-9d42-30d037b49630" },
+      {
+        property: "og:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/1f6390f7-d134-43f4-9d42-30d037b49630",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/1f6390f7-d134-43f4-9d42-30d037b49630",
+      },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
@@ -160,8 +166,8 @@ function RootComponent() {
           </div>
         </div>
         <Toaster richColors theme={theme} position="top-right" />
+        <PopiaConsentBanner />
       </SidebarProvider>
     </QueryClientProvider>
   );
 }
-

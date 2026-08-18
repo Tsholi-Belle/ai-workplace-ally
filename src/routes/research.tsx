@@ -8,7 +8,10 @@ export const Route = createFileRoute("/research")({
   head: () => ({
     meta: [
       { title: "AI Research Assistant — Workplace Ally" },
-      { name: "description", content: "Get balanced briefings on any workplace research question." },
+      {
+        name: "description",
+        content: "Get balanced briefings on any workplace research question.",
+      },
     ],
   }),
   component: ResearchPage,

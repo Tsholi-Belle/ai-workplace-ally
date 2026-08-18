@@ -1,25 +1,76 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireFirebaseAuth } from "@/integrations/firebase/auth-middleware";
 
-const uuid = z.string().uuid();
+const idValidator = z.string().min(1);
 const colour = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
 // ------------- Projects -------------
 
 export const listProjects = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
-      .from("projects")
-      .select("id, owner_id, name, description, deadline, created_at")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return data ?? [];
+    // 1. Fetch projects owned by the user
+    const ownedSnap = await context.db
+      .collection("projects")
+      .where("owner_id", "==", context.userId)
+      .get();
+
+    // 2. Fetch projects where the user is a member
+    const memberSnap = await context.db
+      .collection("project_members")
+      .where("user_id", "==", context.userId)
+      .get();
+
+    const memberProjIds = memberSnap.docs.map((d) => d.data().project_id as string);
+    interface ProjectDoc {
+      id: string;
+      owner_id: string;
+      name: string;
+      description: string | null;
+      deadline: string | null;
+      created_at: string;
+    }
+    const projectsMap = new Map<string, ProjectDoc>();
+
+    for (const doc of ownedSnap.docs) {
+      const data = doc.data();
+      projectsMap.set(doc.id, {
+        id: doc.id,
+        owner_id: (data.owner_id as string) ?? "",
+        name: (data.name as string) ?? "",
+        description: (data.description as string | null) ?? null,
+        deadline: (data.deadline as string | null) ?? null,
+        created_at: (data.created_at as string) ?? "",
+      });
+    }
+
+    for (const projId of memberProjIds) {
+      if (!projectsMap.has(projId)) {
+        const pDoc = await context.db.collection("projects").doc(projId).get();
+        if (pDoc.exists) {
+          const data = pDoc.data() ?? {};
+          projectsMap.set(pDoc.id, {
+            id: pDoc.id,
+            owner_id: (data.owner_id as string) ?? "",
+            name: (data.name as string) ?? "",
+            description: (data.description as string | null) ?? null,
+            deadline: (data.deadline as string | null) ?? null,
+            created_at: (data.created_at as string) ?? "",
+          });
+        }
+      }
+    }
+
+    const list = Array.from(projectsMap.values());
+    list.sort(
+      (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime(),
+    );
+    return list;
   });
 
 export const createProject = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data) =>
     z
       .object({
@@ -30,26 +81,42 @@ export const createProject = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
-      .from("projects")
-      .insert({
-        name: data.name,
-        description: data.description ?? null,
-        deadline: data.deadline || null,
-        owner_id: context.userId,
-      })
-      .select("id, owner_id, name, description, deadline, created_at")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const docRef = context.db.collection("projects").doc();
+    const now = new Date().toISOString();
+    const projectData = {
+      id: docRef.id,
+      name: data.name,
+      description: data.description ?? null,
+      deadline: data.deadline || null,
+      owner_id: context.userId,
+      created_at: now,
+      updated_at: now,
+    };
+    await docRef.set(projectData);
+
+    // Add creator as owner member
+    const memberRef = context.db.collection("project_members").doc();
+    await memberRef.set({
+      id: memberRef.id,
+      project_id: docRef.id,
+      user_id: context.userId,
+      placeholder_name: null,
+      colour: "#4361ee",
+      role: "owner",
+      status: "active",
+      created_at: now,
+      updated_at: now,
+    });
+
+    return projectData;
   });
 
 export const updateProject = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data) =>
     z
       .object({
-        id: uuid,
+        id: idValidator,
         name: z.string().min(1).max(200).optional(),
         description: z.string().max(2000).nullable().optional(),
         deadline: z.string().nullable().optional(),
@@ -58,191 +125,257 @@ export const updateProject = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { id, ...patch } = data;
-    const { error } = await context.supabase.from("projects").update(patch).eq("id", id);
-    if (error) throw new Error(error.message);
+    const cleanPatch: Record<string, unknown> = {
+      ...patch,
+      updated_at: new Date().toISOString(),
+    };
+    await context.db.collection("projects").doc(id).set(cleanPatch, { merge: true });
     return { ok: true };
   });
 
 export const deleteProject = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ id: uuid }).parse(data))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((data) => z.object({ id: idValidator }).parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("projects").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    const batch = context.db.batch();
+
+    // 1. Delete project doc
+    batch.delete(context.db.collection("projects").doc(data.id));
+
+    // 2. Delete tasks for this project
+    const tasksSnap = await context.db.collection("tasks").where("project_id", "==", data.id).get();
+    for (const doc of tasksSnap.docs) batch.delete(doc.ref);
+
+    // 3. Delete members for this project
+    const membersSnap = await context.db
+      .collection("project_members")
+      .where("project_id", "==", data.id)
+      .get();
+    for (const doc of membersSnap.docs) batch.delete(doc.ref);
+
+    // 4. Delete invites for this project
+    const invitesSnap = await context.db
+      .collection("project_invites")
+      .where("project_id", "==", data.id)
+      .get();
+    for (const doc of invitesSnap.docs) batch.delete(doc.ref);
+
+    await batch.commit();
     return { ok: true };
   });
 
 // ------------- Members -------------
 
 export const listMembers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ projectId: uuid }).parse(data))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((data) => z.object({ projectId: idValidator }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
-      .from("project_members")
-      .select("id, project_id, user_id, placeholder_name, colour, role, status, created_at")
-      .eq("project_id", data.projectId)
-      .order("created_at", { ascending: true });
-    if (error) throw new Error(error.message);
-    const userIds = (rows ?? []).map((r) => r.user_id).filter((v): v is string => !!v);
-    let profiles: Record<string, { display_name: string | null; email: string | null; avatar_url: string | null }> = {};
-    if (userIds.length) {
-      const { data: profs } = await context.supabase
-        .from("profiles")
-        .select("id, display_name, email, avatar_url")
-        .in("id", userIds);
-      profiles = Object.fromEntries((profs ?? []).map((p) => [p.id, p]));
+    const snap = await context.db
+      .collection("project_members")
+      .where("project_id", "==", data.projectId)
+      .get();
+
+    const members = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Array<{
+      id: string;
+      project_id: string;
+      user_id: string | null;
+      placeholder_name: string | null;
+      colour: string;
+      role: string;
+      status: string;
+      created_at: string;
+    }>;
+
+    const userIds = members.map((m) => m.user_id).filter((v): v is string => !!v);
+    const profilesMap: Record<
+      string,
+      { display_name: string | null; email: string | null; avatar_url: string | null }
+    > = {};
+
+    if (userIds.length > 0) {
+      for (const uid of userIds) {
+        const profDoc = await context.db.collection("profiles").doc(uid).get();
+        if (profDoc.exists) {
+          const p = profDoc.data();
+          profilesMap[uid] = {
+            display_name: p?.display_name ?? null,
+            email: p?.email ?? null,
+            avatar_url: p?.avatar_url ?? null,
+          };
+        }
+      }
     }
-    return (rows ?? []).map((r) => ({
-      ...r,
-      profile: r.user_id ? profiles[r.user_id] ?? null : null,
+
+    return members.map((m) => ({
+      ...m,
+      profile: m.user_id ? (profilesMap[m.user_id] ?? null) : null,
     }));
   });
 
 export const addPlaceholderMember = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data) =>
-    z.object({ projectId: uuid, name: z.string().min(1).max(80), colour }).parse(data),
+    z.object({ projectId: idValidator, name: z.string().min(1).max(80), colour }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
-      .from("project_members")
-      .insert({
-        project_id: data.projectId,
-        placeholder_name: data.name,
-        colour: data.colour,
-        role: "member",
-        status: "active",
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
+    const docRef = context.db.collection("project_members").doc();
+    const now = new Date().toISOString();
+    const memberData = {
+      id: docRef.id,
+      project_id: data.projectId,
+      user_id: null,
+      placeholder_name: data.name,
+      colour: data.colour,
+      role: "member",
+      status: "active",
+      created_at: now,
+      updated_at: now,
+    };
+    await docRef.set(memberData);
+    return { id: docRef.id };
   });
 
 export const updateMemberColour = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ memberId: uuid, colour }).parse(data))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((data) => z.object({ memberId: idValidator, colour }).parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("project_members")
-      .update({ colour: data.colour })
-      .eq("id", data.memberId);
-    if (error) throw new Error(error.message);
+    await context.db
+      .collection("project_members")
+      .doc(data.memberId)
+      .set({ colour: data.colour, updated_at: new Date().toISOString() }, { merge: true });
     return { ok: true };
   });
 
 export const removeMember = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ memberId: uuid }).parse(data))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((data) => z.object({ memberId: idValidator }).parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("project_members")
-      .delete()
-      .eq("id", data.memberId);
-    if (error) throw new Error(error.message);
+    await context.db.collection("project_members").doc(data.memberId).delete();
     return { ok: true };
   });
 
 // ------------- Invites -------------
 
 export const listMyProjectInvites = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .handler(async ({ context }) => {
-    const email = (context.claims?.email ?? "").toLowerCase();
+    const email = (context.email ?? "").toLowerCase();
     if (!email) return [];
-    const { data, error } = await context.supabase
-      .from("project_invites")
-      .select("id, project_id, email, colour, status, created_at, invited_by")
-      .eq("status", "pending")
-      .ilike("email", email);
-    if (error) throw new Error(error.message);
-    const projIds = [...new Set((data ?? []).map((r) => r.project_id))];
-    let projs: Record<string, { name: string }> = {};
-    if (projIds.length) {
-      const { data: p } = await context.supabase
-        .from("projects")
-        .select("id, name")
-        .in("id", projIds);
-      projs = Object.fromEntries((p ?? []).map((x) => [x.id, x]));
+
+    const snap = await context.db
+      .collection("project_invites")
+      .where("email", "==", email)
+      .where("status", "==", "pending")
+      .get();
+
+    const invites = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Array<{
+      id: string;
+      project_id: string;
+      email: string;
+      colour: string;
+      status: string;
+      created_at: string;
+      invited_by: string;
+    }>;
+
+    const result = [];
+    for (const inv of invites) {
+      const pDoc = await context.db.collection("projects").doc(inv.project_id).get();
+      result.push({
+        ...inv,
+        project_name: pDoc.exists ? (pDoc.data()?.name as string) : "Project",
+      });
     }
-    return (data ?? []).map((r) => ({ ...r, project_name: projs[r.project_id]?.name ?? "Project" }));
+
+    return result;
   });
 
 export const listProjectInvites = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ projectId: uuid }).parse(data))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((data) => z.object({ projectId: idValidator }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
-      .from("project_invites")
-      .select("id, email, colour, status, created_at")
-      .eq("project_id", data.projectId)
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return rows ?? [];
+    const snap = await context.db
+      .collection("project_invites")
+      .where("project_id", "==", data.projectId)
+      .get();
+
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   });
 
 export const inviteToProject = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data) =>
-    z.object({ projectId: uuid, email: z.string().email(), colour }).parse(data),
+    z.object({ projectId: idValidator, email: z.string().email(), colour }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("project_invites").insert({
+    const docRef = context.db.collection("project_invites").doc();
+    const now = new Date().toISOString();
+    await docRef.set({
+      id: docRef.id,
       project_id: data.projectId,
       email: data.email.toLowerCase(),
       colour: data.colour,
       invited_by: context.userId,
+      status: "pending",
+      created_at: now,
+      updated_at: now,
     });
-    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const respondToProjectInvite = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([requireFirebaseAuth])
   .inputValidator((data) =>
-    z.object({ inviteId: uuid, accept: z.boolean(), colour: colour.optional() }).parse(data),
+    z.object({ inviteId: idValidator, accept: z.boolean(), colour: colour.optional() }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    const email = (context.claims?.email ?? "").toLowerCase();
+    const email = (context.email ?? "").toLowerCase();
     if (!email) throw new Error("Missing account email");
-    const { data: inv, error: e1 } = await context.supabase
-      .from("project_invites")
-      .select("id, project_id, email, colour, status")
-      .eq("id", data.inviteId)
-      .maybeSingle();
-    if (e1) throw new Error(e1.message);
-    if (!inv) throw new Error("Invite not found");
+
+    const invDoc = await context.db.collection("project_invites").doc(data.inviteId).get();
+    if (!invDoc.exists) throw new Error("Invite not found");
+
+    const inv = invDoc.data() as {
+      project_id: string;
+      email: string;
+      colour: string;
+      status: string;
+    };
+
     if (inv.email.toLowerCase() !== email) throw new Error("This invite isn't for you");
     if (inv.status !== "pending") throw new Error("Invite already responded to");
 
+    const now = new Date().toISOString();
     if (data.accept) {
-      const { error: mErr } = await context.supabase.from("project_members").insert({
+      const memberRef = context.db.collection("project_members").doc();
+      await memberRef.set({
+        id: memberRef.id,
         project_id: inv.project_id,
         user_id: context.userId,
         colour: data.colour ?? inv.colour,
         role: "member",
         status: "active",
+        created_at: now,
+        updated_at: now,
       });
-      if (mErr && !mErr.message.includes("duplicate")) throw new Error(mErr.message);
     }
 
-    const { error: uErr } = await context.supabase
-      .from("project_invites")
-      .update({ status: data.accept ? "accepted" : "declined", responded_at: new Date().toISOString() })
-      .eq("id", data.inviteId);
-    if (uErr) throw new Error(uErr.message);
+    await invDoc.ref.set(
+      {
+        status: data.accept ? "accepted" : "declined",
+        responded_at: now,
+        updated_at: now,
+      },
+      { merge: true },
+    );
+
     return { ok: true, accepted: data.accept };
   });
 
 export const revokeProjectInvite = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ inviteId: uuid }).parse(data))
+  .middleware([requireFirebaseAuth])
+  .inputValidator((data) => z.object({ inviteId: idValidator }).parse(data))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("project_invites")
-      .delete()
-      .eq("id", data.inviteId);
-    if (error) throw new Error(error.message);
+    await context.db.collection("project_invites").doc(data.inviteId).delete();
     return { ok: true };
   });

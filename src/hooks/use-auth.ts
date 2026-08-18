@@ -1,26 +1,46 @@
 import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+import { auth } from "@/integrations/firebase/client";
+
+export interface AppUser {
+  id: string;
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+  user_metadata: {
+    name?: string | null;
+    full_name?: string | null;
+    avatar_url?: string | null;
+  };
+}
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let active = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      setUser(data.user ?? null);
+    const unsubscribe = onAuthStateChanged(auth, (fbUser: FirebaseUser | null) => {
+      if (fbUser) {
+        setUser({
+          id: fbUser.uid,
+          uid: fbUser.uid,
+          email: fbUser.email,
+          displayName: fbUser.displayName,
+          photoURL: fbUser.photoURL,
+          user_metadata: {
+            name: fbUser.displayName,
+            full_name: fbUser.displayName,
+            avatar_url: fbUser.photoURL,
+          },
+        });
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
+
+    return () => unsubscribe();
   }, []);
 
   return { user, loading };

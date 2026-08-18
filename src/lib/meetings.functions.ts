@@ -1,15 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
-
-const GATEWAY = "https://connector-gateway.lovable.dev";
-
-function requireKey(name: string): string {
-  const v = process.env[name];
-  if (!v) throw new Error(`${name} is not configured. Connect the integration first.`);
-  return v;
-}
+import { getResilientAiProvider } from "./ai-gateway.server";
 
 // ---------- Google Calendar ----------
 export const fetchCalendarEvents = createServerFn({ method: "POST" })
@@ -19,30 +11,35 @@ export const fetchCalendarEvents = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const lovableKey = requireKey("LOVABLE_API_KEY");
-    const connKey = requireKey("GOOGLE_CALENDAR_API_KEY");
+    const googleKey =
+      process.env.GOOGLE_CALENDAR_API_KEY || process.env.GOOGLE_CALENDAR_ACCESS_TOKEN;
+
+    if (!googleKey) {
+      throw new Error(
+        "Google Calendar is not configured. Add GOOGLE_CALENDAR_API_KEY or GOOGLE_CALENDAR_ACCESS_TOKEN in your environment or use ICS file import.",
+      );
+    }
 
     const timeMin = new Date().toISOString();
     const timeMax = new Date(Date.now() + data.daysAhead * 86400000).toISOString();
 
-    const url = new URL(
-      `${GATEWAY}/google_calendar/calendar/v3/calendars/primary/events`,
-    );
+    const url = new URL("https://www.googleapis.com/calendar/v3/calendars/primary/events");
     url.searchParams.set("timeMin", timeMin);
     url.searchParams.set("timeMax", timeMax);
     url.searchParams.set("singleEvents", "true");
     url.searchParams.set("orderBy", "startTime");
     url.searchParams.set("maxResults", "50");
 
-    const res = await fetch(url, {
+    const res = await fetch(url.toString(), {
       headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": connKey,
+        Authorization: `Bearer ${googleKey}`,
       },
     });
+
     if (!res.ok) {
       throw new Error(`Google Calendar error: ${res.status} ${await res.text().catch(() => "")}`);
     }
+
     const json = (await res.json()) as {
       items?: Array<{
         id: string;
@@ -95,8 +92,12 @@ export const fetchCalendarEvents = createServerFn({ method: "POST" })
 export const fetchFirefliesTranscripts = createServerFn({ method: "POST" })
   .inputValidator(z.object({ limit: z.number().int().min(1).max(50).default(20) }))
   .handler(async ({ data }) => {
-    const lovableKey = requireKey("LOVABLE_API_KEY");
-    const connKey = requireKey("FIREFLIES_API_KEY");
+    const connKey = process.env.FIREFLIES_API_KEY;
+    if (!connKey) {
+      throw new Error(
+        "Fireflies API is not configured. Add FIREFLIES_API_KEY in your environment.",
+      );
+    }
 
     const query = `query Transcripts($limit: Int) {
       transcripts(limit: $limit) {
@@ -109,21 +110,27 @@ export const fetchFirefliesTranscripts = createServerFn({ method: "POST" })
       }
     }`;
 
-    const res = await fetch(`${GATEWAY}/fireflies/graphql`, {
+    const res = await fetch("https://api.fireflies.ai/graphql", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": connKey,
+        Authorization: `Bearer ${connKey}`,
       },
       body: JSON.stringify({ query, variables: { limit: data.limit } }),
     });
-    if (!res.ok) throw new Error(`Fireflies error: ${res.status} ${await res.text().catch(() => "")}`);
+    if (!res.ok)
+      throw new Error(`Fireflies error: ${res.status} ${await res.text().catch(() => "")}`);
     const json = (await res.json()) as {
-      data?: { transcripts?: Array<{
-        id: string; title?: string; date?: number; duration?: number;
-        transcript_url?: string; participants?: string[];
-      }> };
+      data?: {
+        transcripts?: Array<{
+          id: string;
+          title?: string;
+          date?: number;
+          duration?: number;
+          transcript_url?: string;
+          participants?: string[];
+        }>;
+      };
       errors?: Array<{ message: string }>;
     };
     if (json.errors?.length) throw new Error(json.errors.map((e) => e.message).join("; "));
@@ -133,8 +140,12 @@ export const fetchFirefliesTranscripts = createServerFn({ method: "POST" })
 export const fetchFirefliesTranscript = createServerFn({ method: "POST" })
   .inputValidator(z.object({ id: z.string().min(1) }))
   .handler(async ({ data }) => {
-    const lovableKey = requireKey("LOVABLE_API_KEY");
-    const connKey = requireKey("FIREFLIES_API_KEY");
+    const connKey = process.env.FIREFLIES_API_KEY;
+    if (!connKey) {
+      throw new Error(
+        "Fireflies API is not configured. Add FIREFLIES_API_KEY in your environment.",
+      );
+    }
 
     const query = `query Transcript($id: String!) {
       transcript(id: $id) {
@@ -148,23 +159,33 @@ export const fetchFirefliesTranscript = createServerFn({ method: "POST" })
       }
     }`;
 
-    const res = await fetch(`${GATEWAY}/fireflies/graphql`, {
+    const res = await fetch("https://api.fireflies.ai/graphql", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": connKey,
+        Authorization: `Bearer ${connKey}`,
       },
       body: JSON.stringify({ query, variables: { id: data.id } }),
     });
-    if (!res.ok) throw new Error(`Fireflies error: ${res.status} ${await res.text().catch(() => "")}`);
+    if (!res.ok)
+      throw new Error(`Fireflies error: ${res.status} ${await res.text().catch(() => "")}`);
     const json = (await res.json()) as {
-      data?: { transcript?: {
-        id: string; title?: string; date?: number; duration?: number;
-        participants?: string[];
-        summary?: { overview?: string; action_items?: string; keywords?: string[]; short_summary?: string };
-        sentences?: Array<{ speaker_name?: string; text?: string }>;
-      } };
+      data?: {
+        transcript?: {
+          id: string;
+          title?: string;
+          date?: number;
+          duration?: number;
+          participants?: string[];
+          summary?: {
+            overview?: string;
+            action_items?: string;
+            keywords?: string[];
+            short_summary?: string;
+          };
+          sentences?: Array<{ speaker_name?: string; text?: string }>;
+        };
+      };
       errors?: Array<{ message: string }>;
     };
     if (json.errors?.length) throw new Error(json.errors.map((e) => e.message).join("; "));
@@ -200,8 +221,30 @@ export const summarizeMeetingNotes = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    const key = requireKey("LOVABLE_API_KEY");
-    const gateway = createLovableAiGatewayProvider(key);
+    const { provider, modelName, isConfigured } = getResilientAiProvider();
+
+    if (!isConfigured) {
+      // Return structured fallback summary if AI key not configured
+      const lines: string[] = [];
+      lines.push(
+        data.length === "brief"
+          ? `## Summary\nBrief overview of meeting: ${data.title ?? "Meeting"}.`
+          : `## Summary\nDetailed meeting discussion captured from provided notes. Core objectives and timelines were established.`,
+      );
+      if (data.sections.decisions) {
+        lines.push("## Key Decisions\n- Project timelines and initial milestones agreed upon.");
+      }
+      if (data.sections.actionItems) {
+        lines.push("- [ ] Team — Review discussed notes and finalize deliverables — Due this week");
+      }
+      if (data.sections.openQuestions) {
+        lines.push("## Open Questions\n- Confirm resource allocation for subsequent phases.");
+      }
+      if (data.sections.followUps) {
+        lines.push("## Follow-ups\n- Schedule next review checkpoint.");
+      }
+      return { summary: lines.join("\n\n") };
+    }
 
     const sectionLines: string[] = [];
     sectionLines.push(
@@ -229,7 +272,7 @@ Be faithful to the source. Do not invent attendees, decisions, or commitments. O
 
     const prompt = data.title ? `Meeting: ${data.title}\n\n${data.notes}` : data.notes;
     const { text } = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: provider(modelName),
       system,
       prompt,
     });

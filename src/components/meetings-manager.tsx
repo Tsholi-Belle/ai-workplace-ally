@@ -58,11 +58,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -233,7 +229,7 @@ export function MeetingsManager() {
   const { user } = useAuth();
   const isGoogleUser = Boolean(
     user?.app_metadata?.provider === "google" ||
-      user?.identities?.some((i) => i.provider === "google"),
+    user?.identities?.some((i) => i.provider === "google"),
   );
   const [meetings, setMeetingsRaw] = useLocalStorage<Meeting[]>("wpa:meetings:list", []);
   const [activeId, setActiveId] = useLocalStorage<string | null>("wpa:meetings:active", null);
@@ -261,7 +257,8 @@ export function MeetingsManager() {
   // Migration: ensure attendees are objects with roles.
   const setMeetings = (updater: Meeting[] | ((prev: Meeting[]) => Meeting[])) => {
     setMeetingsRaw((prev) => {
-      const next = typeof updater === "function" ? (updater as (p: Meeting[]) => Meeting[])(prev) : updater;
+      const next =
+        typeof updater === "function" ? (updater as (p: Meeting[]) => Meeting[])(prev) : updater;
       return next.map((m) => ({
         ...m,
         attendees: normalizeAttendees(m.attendees),
@@ -401,7 +398,7 @@ export function MeetingsManager() {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)
-        .map((name, i) => ({ name, role: i === 0 ? "owner" : "viewer" } as Attendee)),
+        .map((name, i) => ({ name, role: i === 0 ? "owner" : "viewer" }) as Attendee),
       notes: "",
       summary: "",
       source: "manual",
@@ -473,7 +470,9 @@ export function MeetingsManager() {
         });
         added++;
       }
-      toast.success(added ? `Imported ${added} transcript${added > 1 ? "s" : ""}` : "No new transcripts");
+      toast.success(
+        added ? `Imported ${added} transcript${added > 1 ? "s" : ""}` : "No new transcripts",
+      );
     },
     onError: (e: unknown) => {
       const msg = e instanceof Error ? e.message : "Failed";
@@ -541,7 +540,9 @@ export function MeetingsManager() {
       added++;
     }
     toast.success(
-      added ? `Imported ${added} meeting${added > 1 ? "s" : ""} from ICS` : "All events already imported",
+      added
+        ? `Imported ${added} meeting${added > 1 ? "s" : ""} from ICS`
+        : "All events already imported",
     );
   };
 
@@ -569,17 +570,16 @@ export function MeetingsManager() {
       // Preserve the previous summary in history before overwriting so the
       // user can diff old vs new generations.
       const prevHistory = target.summaryHistory ?? [];
-      const nextHistory: SummaryHistoryEntry[] =
-        target.summary?.trim()
-          ? [
-              {
-                ts: Date.now(),
-                summary: target.summary,
-                options: target.summaryOptions ?? DEFAULT_SUMMARY_OPTIONS,
-              },
-              ...prevHistory,
-            ].slice(0, 10)
-          : prevHistory;
+      const nextHistory: SummaryHistoryEntry[] = target.summary?.trim()
+        ? [
+            {
+              ts: Date.now(),
+              summary: target.summary,
+              options: target.summaryOptions ?? DEFAULT_SUMMARY_OPTIONS,
+            },
+            ...prevHistory,
+          ].slice(0, 10)
+        : prevHistory;
       updateMeeting(target.id, {
         summary: res.summary,
         summaryHistory: nextHistory,
@@ -604,9 +604,7 @@ export function MeetingsManager() {
         <NotificationsPanel
           notifications={notifications}
           unread={unreadCount}
-          onMarkAllRead={() =>
-            setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-          }
+          onMarkAllRead={() => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))}
           onClear={() => setNotifications([])}
           onOpenMeeting={(id) => {
             setActiveId(id);
@@ -616,9 +614,7 @@ export function MeetingsManager() {
           }}
           onDeclineInvite={(id, title) => {
             setNotifications((prev) =>
-              prev.filter(
-                (n) => !(n.meetingId === id && n.kind === "invite" && n.invitePending),
-              ),
+              prev.filter((n) => !(n.meetingId === id && n.kind === "invite" && n.invitePending)),
             );
             try {
               const raw = localStorage.getItem("wpa:invites:declined");
@@ -698,7 +694,9 @@ export function MeetingsManager() {
                 className="w-full justify-start"
                 onClick={() => calendarMut.mutate()}
                 disabled={calendarMut.isPending || !isGoogleUser}
-                title={isGoogleUser ? undefined : "Sign in with Google to import from Google Calendar"}
+                title={
+                  isGoogleUser ? undefined : "Sign in with Google to import from Google Calendar"
+                }
               >
                 {calendarMut.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -738,9 +736,7 @@ export function MeetingsManager() {
             </CardHeader>
             <CardContent className="space-y-1 max-h-[480px] overflow-auto">
               {sorted.length === 0 && (
-                <p className="text-xs text-muted-foreground py-6 text-center">
-                  No meetings yet.
-                </p>
+                <p className="text-xs text-muted-foreground py-6 text-center">No meetings yet.</p>
               )}
               {sorted.map((m) => {
                 const isActive = m.id === activeId;
@@ -759,7 +755,10 @@ export function MeetingsManager() {
                         <p className="truncate text-sm font-medium">{m.title}</p>
                         <p className="text-xs text-muted-foreground">{fmtDate(m.startsAt)}</p>
                       </div>
-                      <Badge variant="outline" className={`text-[10px] ${PLATFORM_COLOR[m.platform]}`}>
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] ${PLATFORM_COLOR[m.platform]}`}
+                      >
                         {PLATFORM_LABEL[m.platform]}
                       </Badge>
                     </div>
@@ -867,7 +866,9 @@ function NotificationsPanel({
                     />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">{n.title}</p>
-                      {n.body && <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>}
+                      {n.body && (
+                        <p className="text-xs text-muted-foreground line-clamp-2">{n.body}</p>
+                      )}
                       <p className="mt-1 text-[10px] text-muted-foreground">
                         {new Date(n.ts).toLocaleString()}
                       </p>
@@ -934,10 +935,7 @@ function ReminderSettings({
         </div>
         <div className="space-y-1">
           <Label className="text-xs text-muted-foreground">Remind me before</Label>
-          <Select
-            value={String(minutes)}
-            onValueChange={(v) => onMinutesChange(Number(v))}
-          >
+          <Select value={String(minutes)} onValueChange={(v) => onMinutesChange(Number(v))}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -1033,11 +1031,7 @@ function IcsImportDialog({ onImport }: { onImport: (text: string) => void }) {
         </DialogHeader>
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileRef.current?.click()}
-            >
+            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
               <Upload className="mr-1 h-4 w-4" /> Upload .ics file
             </Button>
             <input
@@ -1201,7 +1195,8 @@ function MeetingDetail({
                     className="flex items-center gap-1"
                     title={`Invite link — ${inviteStats.opens} open${inviteStats.opens === 1 ? "" : "s"}, ${inviteStats.accepts} accept${inviteStats.accepts === 1 ? "" : "s"}`}
                   >
-                    <Link2 className="h-3 w-3" /> {inviteStats.opens} opened · {inviteStats.accepts} accepted
+                    <Link2 className="h-3 w-3" /> {inviteStats.opens} opened · {inviteStats.accepts}{" "}
+                    accepted
                   </span>
                 )}
               </div>
@@ -1468,9 +1463,15 @@ function AttendeesCard({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-72 text-xs space-y-1.5">
-            <p><strong>Owner</strong> — manages the meeting and permissions.</p>
-            <p><strong>Editor</strong> — can change details and notes.</p>
-            <p><strong>Viewer</strong> — can view only.</p>
+            <p>
+              <strong>Owner</strong> — manages the meeting and permissions.
+            </p>
+            <p>
+              <strong>Editor</strong> — can change details and notes.
+            </p>
+            <p>
+              <strong>Viewer</strong> — can view only.
+            </p>
             <p className="text-muted-foreground pt-1.5 border-t border-border/40">
               Stored locally for sharing tracking. Cross-user enforcement requires backend auth.
             </p>
@@ -1498,7 +1499,10 @@ function AttendeesCard({
                 <SelectItem value="viewer">Viewer</SelectItem>
               </SelectContent>
             </Select>
-            <Badge variant="outline" className={`text-[10px] hidden sm:inline-flex ${ROLE_COLOR[a.role]}`}>
+            <Badge
+              variant="outline"
+              className={`text-[10px] hidden sm:inline-flex ${ROLE_COLOR[a.role]}`}
+            >
               {ROLE_LABEL[a.role]}
             </Badge>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => remove(i)}>
@@ -1552,9 +1556,7 @@ function SummaryHistoryDialog({
   onRestore: (entry: SummaryHistoryEntry) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [selectedTs, setSelectedTs] = useState<number | null>(
-    history[0]?.ts ?? null,
-  );
+  const [selectedTs, setSelectedTs] = useState<number | null>(history[0]?.ts ?? null);
 
   const selected = useMemo(
     () => history.find((h) => h.ts === selectedTs) ?? history[0],
@@ -1591,14 +1593,10 @@ function SummaryHistoryDialog({
                   key={h.ts}
                   onClick={() => setSelectedTs(h.ts)}
                   className={`w-full text-left rounded-md border p-2 transition-colors ${
-                    active
-                      ? "border-primary/60 bg-primary/5"
-                      : "border-border/40 hover:bg-muted/40"
+                    active ? "border-primary/60 bg-primary/5" : "border-border/40 hover:bg-muted/40"
                   }`}
                 >
-                  <p className="text-xs font-medium">
-                    {new Date(h.ts).toLocaleString()}
-                  </p>
+                  <p className="text-xs font-medium">{new Date(h.ts).toLocaleString()}</p>
                   <p className="text-[11px] text-muted-foreground line-clamp-2">
                     {summaryOptionsLabel(h.options)}
                   </p>
@@ -1658,4 +1656,3 @@ function SummaryHistoryDialog({
     </Dialog>
   );
 }
-

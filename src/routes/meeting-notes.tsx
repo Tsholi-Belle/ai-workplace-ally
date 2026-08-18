@@ -8,7 +8,10 @@ export const Route = createFileRoute("/meeting-notes")({
   head: () => ({
     meta: [
       { title: "Meeting Notes Summariser — Workplace Ally" },
-      { name: "description", content: "Turn raw meeting notes into clean summaries with action items." },
+      {
+        name: "description",
+        content: "Turn raw meeting notes into clean summaries with action items.",
+      },
     ],
   }),
   component: MeetingNotesPage,

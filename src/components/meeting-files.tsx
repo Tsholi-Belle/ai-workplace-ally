@@ -2,16 +2,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Download, FolderOpen, Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+  listAll,
+  getMetadata,
+} from "firebase/storage";
+import { storage } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const BUCKET = "meeting-files";
 const MAX_BYTES = 25 * 1024 * 1024; // 25 MB
 
 type StoredFile = {
   name: string;
+  fullPath: string;
   size: number;
   updatedAt: string;
 };
@@ -29,29 +37,41 @@ export function MeetingFiles({ meetingId }: { meetingId: string }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const prefix = user ? `${user.id}/${meetingId}` : "";
+  const prefix = user ? `meeting-files/${user.id}/${meetingId}` : "";
 
   const refresh = useCallback(async () => {
-    if (!user) return;
+    if (!user || !prefix) return;
     setLoading(true);
-    const { data, error } = await supabase.storage.from(BUCKET).list(prefix, {
-      limit: 100,
-      sortBy: { column: "updated_at", order: "desc" },
-    });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const folderRef = ref(storage, prefix);
+      const res = await listAll(folderRef);
+      const items: StoredFile[] = [];
+
+      for (const itemRef of res.items) {
+        try {
+          const meta = await getMetadata(itemRef);
+          items.push({
+            name: itemRef.name,
+            fullPath: itemRef.fullPath,
+            size: meta.size,
+            updatedAt: meta.updated,
+          });
+        } catch {
+          items.push({
+            name: itemRef.name,
+            fullPath: itemRef.fullPath,
+            size: 0,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      setFiles(items);
+    } catch (e) {
+      console.warn("[MeetingFiles] Storage list error:", e);
+    } finally {
+      setLoading(false);
     }
-    setFiles(
-      (data ?? [])
-        .filter((f) => f.name && !f.name.endsWith("/"))
-        .map((f) => ({
-          name: f.name,
-          size: (f.metadata as { size?: number } | null)?.size ?? 0,
-          updatedAt: f.updated_at ?? f.created_at ?? "",
-        })),
-    );
   }, [user, prefix]);
 
   useEffect(() => {
@@ -61,7 +81,7 @@ export function MeetingFiles({ meetingId }: { meetingId: string }) {
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const list = e.target.files;
-    if (!list || list.length === 0 || !user) return;
+    if (!list || list.length === 0 || !user || !prefix) return;
     setUploading(true);
     try {
       for (const file of Array.from(list)) {
@@ -69,46 +89,44 @@ export function MeetingFiles({ meetingId }: { meetingId: string }) {
           toast.error(`${file.name} exceeds 25 MB`);
           continue;
         }
-        const path = `${prefix}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, "_")}`;
-        const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+        const safeName = `${Date.now()}-${file.name.replace(/[^\w.-]+/g, "_")}`;
+        const fileRef = ref(storage, `${prefix}/${safeName}`);
+        await uploadBytes(fileRef, file, {
           contentType: file.type || "application/octet-stream",
-          upsert: false,
         });
-        if (error) {
-          toast.error(`${file.name}: ${error.message}`);
-        } else {
-          toast.success(`Uploaded ${file.name}`);
-        }
+        toast.success(`Uploaded ${file.name}`);
       }
       await refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
   }
 
-  async function handleDownload(name: string) {
+  async function handleDownload(fullPath: string) {
     if (!user) return;
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(`${prefix}/${name}`, 60);
-    if (error || !data?.signedUrl) {
-      toast.error(error?.message ?? "Could not create download link");
-      return;
+    try {
+      const fileRef = ref(storage, fullPath);
+      const url = await getDownloadURL(fileRef);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not open download link");
     }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
-  async function handleDelete(name: string) {
+  async function handleDelete(fullPath: string, name: string) {
     if (!user) return;
     if (!confirm(`Delete ${name}?`)) return;
-    const { error } = await supabase.storage.from(BUCKET).remove([`${prefix}/${name}`]);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const fileRef = ref(storage, fullPath);
+      await deleteObject(fileRef);
+      toast.success("Deleted");
+      await refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
     }
-    toast.success("Deleted");
-    await refresh();
   }
 
   return (
@@ -127,8 +145,17 @@ export function MeetingFiles({ meetingId }: { meetingId: string }) {
               onChange={handleUpload}
               accept=".pdf,.txt,.md,.docx,.doc,.csv,.json,.vtt,.srt,.mp3,.wav,.m4a,.png,.jpg,.jpeg"
             />
-            <Button size="sm" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}>
-              {uploading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Upload className="mr-1 h-4 w-4" />}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="mr-1 h-4 w-4" />
+              )}
               Upload
             </Button>
           </>
@@ -155,20 +182,30 @@ export function MeetingFiles({ meetingId }: { meetingId: string }) {
             {files.map((f) => {
               const display = f.name.replace(/^\d+-/, "");
               return (
-                <li key={f.name} className="flex items-center justify-between gap-2 px-3 py-2">
+                <li key={f.fullPath} className="flex items-center justify-between gap-2 px-3 py-2">
                   <button
                     type="button"
-                    onClick={() => handleDownload(f.name)}
+                    onClick={() => handleDownload(f.fullPath)}
                     className="flex-1 truncate text-left text-sm hover:underline"
                     title={display}
                   >
                     {display}
                   </button>
                   <span className="text-xs text-muted-foreground">{formatBytes(f.size)}</span>
-                  <Button size="icon" variant="ghost" onClick={() => handleDownload(f.name)} title="Download">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleDownload(f.fullPath)}
+                    title="Download"
+                  >
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" onClick={() => handleDelete(f.name)} title="Delete">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleDelete(f.fullPath, f.name)}
+                    title="Delete"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </li>

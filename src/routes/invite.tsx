@@ -104,16 +104,12 @@ function InvitePage() {
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [accepting, setAccepting] = useState(false);
 
-  const meetingId = useMemo(
-    () => (payload ? `invite:${payload.iid}` : ""),
-    [payload],
-  );
+  const meetingId = useMemo(() => (payload ? `invite:${payload.iid}` : ""), [payload]);
 
   // Decode the invite hash + log an open event + queue a "pending invite"
   // entry in the recipient's bell.
   useEffect(() => {
-    const hash =
-      typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+    const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
     if (!hash) {
       setStatus("invalid");
       return;
@@ -153,10 +149,7 @@ function InvitePage() {
           kind: "invite",
           invitePending: true,
         };
-        localStorage.setItem(
-          NOTIF_KEY,
-          JSON.stringify([item, ...notes].slice(0, 50)),
-        );
+        localStorage.setItem(NOTIF_KEY, JSON.stringify([item, ...notes].slice(0, 50)));
       }
     }
 
@@ -209,10 +202,7 @@ function InvitePage() {
         kind: "invite",
         invitePending: false,
       };
-      localStorage.setItem(
-        NOTIF_KEY,
-        JSON.stringify([accepted, ...withoutPending].slice(0, 50)),
-      );
+      localStorage.setItem(NOTIF_KEY, JSON.stringify([accepted, ...withoutPending].slice(0, 50)));
       localStorage.setItem(ACTIVE_KEY, JSON.stringify(meetingId));
       recordInviteEvent(meetingId, "accept");
       setStatus("accepted");

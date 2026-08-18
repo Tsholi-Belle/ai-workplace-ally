@@ -87,12 +87,7 @@ export function FeatureInstructions({ featureKey, title, steps, tips }: Props) {
             >
               {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={dismiss}
-              aria-label="Dismiss instructions"
-            >
+            <Button variant="ghost" size="sm" onClick={dismiss} aria-label="Dismiss instructions">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -119,10 +114,7 @@ export function FeatureInstructions({ featureKey, title, steps, tips }: Props) {
             )}
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
               <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
-                <Checkbox
-                  checked={dontShow}
-                  onCheckedChange={(v) => setDontShow(v === true)}
-                />
+                <Checkbox checked={dontShow} onCheckedChange={(v) => setDontShow(v === true)} />
                 Do not show this again
               </label>
               <Button size="sm" variant="outline" onClick={dismiss}>

@@ -45,9 +45,7 @@ export function readNotifications(): StoredNotification[] {
 }
 
 export function getPendingInvites(): StoredNotification[] {
-  return readNotifications().filter(
-    (n) => n.kind === "invite" && n.invitePending && !!n.meetingId,
-  );
+  return readNotifications().filter((n) => n.kind === "invite" && n.invitePending && !!n.meetingId);
 }
 
 export function getDeclinedIds(): string[] {

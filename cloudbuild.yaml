@@ -1,0 +1,43 @@
+steps:
+  # 1. Build the container image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/ai-workplace-ally:$COMMIT_SHA"
+      - "-t"
+      - "gcr.io/$PROJECT_ID/ai-workplace-ally:latest"
+      - "."
+
+  # 2. Push image to Google Container Registry / Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "gcr.io/$PROJECT_ID/ai-workplace-ally:$COMMIT_SHA"
+
+  # 3. Deploy container image to Google Cloud Run (Free Tier)
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "ai-workplace-ally"
+      - "--image"
+      - "gcr.io/$PROJECT_ID/ai-workplace-ally:$COMMIT_SHA"
+      - "--region"
+      - "europe-west1"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--min-instances"
+      - "0"
+      - "--max-instances"
+      - "2"
+      - "--memory"
+      - "512Mi"
+      - "--cpu"
+      - "1"
+
+images:
+  - "gcr.io/$PROJECT_ID/ai-workplace-ally:$COMMIT_SHA"
+  - "gcr.io/$PROJECT_ID/ai-workplace-ally:latest"

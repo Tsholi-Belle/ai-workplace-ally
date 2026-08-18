@@ -21,9 +21,7 @@ type SpeechRecognitionLike = {
   onend: (() => void) | null;
 };
 
-function getRecognitionCtor():
-  | (new () => SpeechRecognitionLike)
-  | null {
+function getRecognitionCtor(): (new () => SpeechRecognitionLike) | null {
   if (typeof window === "undefined") return null;
   const w = window as unknown as {
     SpeechRecognition?: new () => SpeechRecognitionLike;

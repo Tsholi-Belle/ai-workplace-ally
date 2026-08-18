@@ -27,10 +27,30 @@ export const Route = createFileRoute("/")({
 });
 
 const stats = [
-  { label: "Meetings this week", placeholder: "0", icon: Video, tint: "bg-[oklch(0.68_0.24_0/0.12)] text-[oklch(0.68_0.24_0)]" },
-  { label: "Open tasks", placeholder: "0", icon: ListChecks, tint: "bg-[oklch(0.6_0.2_285/0.12)] text-[oklch(0.6_0.2_285)]" },
-  { label: "Notes captured", placeholder: "0", icon: FileText, tint: "bg-[oklch(0.78_0.13_230/0.14)] text-[oklch(0.5_0.16_230)]" },
-  { label: "Hours saved", placeholder: "0.0", icon: TrendingUp, tint: "bg-[oklch(0.55_0.18_160/0.12)] text-[oklch(0.5_0.18_160)]" },
+  {
+    label: "Meetings this week",
+    placeholder: "0",
+    icon: Video,
+    tint: "bg-[oklch(0.68_0.24_0/0.12)] text-[oklch(0.68_0.24_0)]",
+  },
+  {
+    label: "Open tasks",
+    placeholder: "0",
+    icon: ListChecks,
+    tint: "bg-[oklch(0.6_0.2_285/0.12)] text-[oklch(0.6_0.2_285)]",
+  },
+  {
+    label: "Notes captured",
+    placeholder: "0",
+    icon: FileText,
+    tint: "bg-[oklch(0.78_0.13_230/0.14)] text-[oklch(0.5_0.16_230)]",
+  },
+  {
+    label: "Hours saved",
+    placeholder: "0.0",
+    icon: TrendingUp,
+    tint: "bg-[oklch(0.55_0.18_160/0.12)] text-[oklch(0.5_0.18_160)]",
+  },
 ] as const;
 
 const quickActions = [
@@ -59,7 +79,12 @@ function Dashboard() {
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:flex sm:flex-wrap sm:justify-between">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">Workspace</p>
-          <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl" style={{ fontFamily: '"Roboto", sans-serif' }}>Welcome to your workspace</h1>
+          <h1
+            className="truncate text-2xl font-bold tracking-tight sm:text-3xl"
+            style={{ fontFamily: '"Roboto", sans-serif' }}
+          >
+            Welcome to your workspace
+          </h1>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button asChild variant="outline" size="sm">
@@ -68,7 +93,11 @@ function Dashboard() {
               Schedule
             </Link>
           </Button>
-          <Button asChild size="sm" className="gradient-primary text-primary-foreground shadow-elegant">
+          <Button
+            asChild
+            size="sm"
+            className="gradient-primary text-primary-foreground shadow-elegant"
+          >
             <Link to="/meetings">
               <Plus className="h-4 w-4" />
               New meeting
@@ -96,12 +125,16 @@ function Dashboard() {
         {stats.map((s) => (
           <Card key={s.label} className="shadow-card opacity-60">
             <CardContent className="flex items-center gap-3 p-4">
-              <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${s.tint} opacity-70`}>
+              <div
+                className={`grid h-10 w-10 shrink-0 place-items-center rounded-lg ${s.tint} opacity-70`}
+              >
                 <s.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl font-semibold tabular-nums text-muted-foreground/70">{s.placeholder}</span>
+                  <span className="text-xl font-semibold tabular-nums text-muted-foreground/70">
+                    {s.placeholder}
+                  </span>
                 </div>
                 <p className="truncate text-xs text-muted-foreground/70">{s.label}</p>
               </div>
@@ -136,7 +169,9 @@ function Dashboard() {
         <Card className="shadow-card lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming</CardTitle>
-            <Link to="/meetings" className="text-xs text-primary-glow hover:underline">View all</Link>
+            <Link to="/meetings" className="text-xs text-primary-glow hover:underline">
+              View all
+            </Link>
           </CardHeader>
           <CardContent className="space-y-2">
             {upcomingPlaceholders.map((m) => (
@@ -149,8 +184,14 @@ function Dashboard() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-muted-foreground/70">{m.title}</p>
                   <p className="flex items-center gap-3 text-xs text-muted-foreground/60">
-                    <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{m.when}</span>
-                    <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />{m.who}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {m.when}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {m.who}
+                    </span>
                   </p>
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
@@ -164,7 +205,9 @@ function Dashboard() {
 
         <Card className="shadow-card">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Recent activity</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Recent activity
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {recentPlaceholders.map((r) => (

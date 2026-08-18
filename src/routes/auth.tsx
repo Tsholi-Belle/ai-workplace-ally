@@ -2,8 +2,15 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Laptop } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  sendEmailVerification,
+} from "firebase/auth";
+import { auth } from "@/integrations/firebase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,11 +25,49 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — Workplace Ally" },
-      { name: "description", content: "Sign in to sync your meetings, notes, and files across devices." },
+      {
+        name: "description",
+        content: "Sign in to sync your meetings, tasks, and notes across devices.",
+      },
     ],
   }),
   component: AuthPage,
 });
+
+function GitHubIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+      />
+    </svg>
+  );
+}
+
+function GoogleIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      />
+    </svg>
+  );
+}
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -38,7 +83,7 @@ function AuthPage() {
       if (redirect && redirect.startsWith("/")) {
         window.location.assign(redirect);
       } else {
-        navigate({ to: "/meetings" });
+        navigate({ to: "/task-planner" });
       }
     }
   }, [user, loading, navigate, redirect]);
@@ -47,73 +92,76 @@ function AuthPage() {
     setBusy(true);
     try {
       if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Signed in");
+        await signInWithEmailAndPassword(auth, email, password);
+        toast.success("Signed in successfully");
       } else {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) throw error;
-        // When email confirmation is required, Supabase returns a user with no session.
-        if (data.user && !data.session) {
-          setPendingEmail(email);
-          toast.success("Verification email sent");
-        } else {
-          toast.success("Account created");
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        if (userCredential.user) {
+          try {
+            await sendEmailVerification(userCredential.user);
+            setPendingEmail(email);
+            toast.success("Account created! Verification email sent.");
+          } catch {
+            toast.success("Account created successfully!");
+          }
         }
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Auth failed");
+      toast.error(e instanceof Error ? e.message : "Authentication failed");
     } finally {
       setBusy(false);
     }
   }
 
-  async function resendVerification() {
-    if (!pendingEmail) return;
+  async function handleOAuth(providerName: "github" | "google") {
     setBusy(true);
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: pendingEmail,
-        options: { emailRedirectTo: window.location.origin },
-      });
-      if (error) throw error;
-      toast.success("Verification email resent");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not resend");
-    } finally {
-      setBusy(false);
-    }
-  }
+      const provider =
+        providerName === "google" ? new GoogleAuthProvider() : new GithubAuthProvider();
 
-  async function handleGoogle() {
-    setBusy(true);
-    try {
-      const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-      if (result.error) throw result.error;
+      await signInWithPopup(auth, provider);
+      toast.success(`Signed in with ${providerName === "google" ? "Google" : "GitHub"}`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Google sign-in failed");
+      toast.error(e instanceof Error ? e.message : `${providerName} sign-in failed`);
+    } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-md items-center">
-      <Card className="w-full shadow-card">
+    <div className="mx-auto flex min-h-[75vh] max-w-md items-center py-6">
+      <Card className="w-full shadow-card backdrop-blur">
         <CardHeader className="text-center">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg gradient-primary shadow-elegant">
             <Laptop className="h-5 w-5 text-primary-foreground" />
           </div>
-          <CardTitle className="font-display">Welcome to Workplace Ally</CardTitle>
+          <CardTitle className="font-display text-xl font-bold tracking-tight">
+            Welcome to Workplace Ally
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button variant="outline" className="w-full" onClick={handleGoogle} disabled={busy}>
-            Continue with Google
-          </Button>
+          {/* OAuth Buttons (Google & GitHub) */}
+          <div className="grid gap-2">
+            <Button
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              onClick={() => handleOAuth("google")}
+              disabled={busy}
+            >
+              <GoogleIcon className="h-4 w-4" />
+              Continue with Google
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              onClick={() => handleOAuth("github")}
+              disabled={busy}
+            >
+              <GitHubIcon className="h-4 w-4" />
+              Continue with GitHub
+            </Button>
+          </div>
+
           <p className="text-center text-xs text-muted-foreground">
             By continuing you agree to our{" "}
             <Link to="/terms" className="underline underline-offset-2 hover:text-foreground">
@@ -121,33 +169,27 @@ function AuthPage() {
             </Link>{" "}
             and{" "}
             <Link to="/privacy" className="underline underline-offset-2 hover:text-foreground">
-              Privacy Policy
+              POPIA Privacy Policy
             </Link>
-            . Workplace Ally's use of information received from Google APIs adheres to the{" "}
-            <a
-              href="https://developers.google.com/terms/api-services-user-data-policy"
-              target="_blank"
-              rel="noreferrer"
-              className="underline underline-offset-2 hover:text-foreground"
-            >
-              Google API Services User Data Policy
-            </a>
-            , including the Limited Use requirements.
+            . Your workplace data is private and secure on Google Cloud.
           </p>
+
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+            <div className="h-px flex-1 bg-border" /> or continue with email{" "}
+            <div className="h-px flex-1 bg-border" />
           </div>
+
           {pendingEmail && (
             <div className="rounded-md border border-border bg-muted/40 p-3 text-sm">
               <p className="font-medium">Verify your email</p>
-              <p className="text-muted-foreground mt-1">
-                We sent a verification link to <span className="font-medium text-foreground">{pendingEmail}</span>. Click it to activate your account before signing in.
+              <p className="text-muted-foreground mt-1 text-xs">
+                We sent a verification link to{" "}
+                <span className="font-medium text-foreground">{pendingEmail}</span>. Check your
+                inbox to complete setup.
               </p>
-              <Button variant="link" className="h-auto p-0 mt-1 text-xs" onClick={resendVerification} disabled={busy}>
-                Resend verification email
-              </Button>
             </div>
           )}
+
           <Tabs defaultValue="signin">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
@@ -157,13 +199,28 @@ function AuthPage() {
               <TabsContent key={mode} value={mode} className="space-y-3 pt-3">
                 <div className="space-y-1">
                   <Label htmlFor={`${mode}-email`}>Email</Label>
-                  <Input id={`${mode}-email`} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                  <Input
+                    id={`${mode}-email`}
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@company.com"
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor={`${mode}-pw`}>Password</Label>
-                  <Input id={`${mode}-pw`} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <Input
+                    id={`${mode}-pw`}
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </div>
-                <Button className="w-full" onClick={() => handleEmail(mode)} disabled={busy || !email || !password}>
+                <Button
+                  className="w-full gradient-primary text-primary-foreground"
+                  onClick={() => handleEmail(mode)}
+                  disabled={busy || !email || !password}
+                >
                   {mode === "signin" ? "Sign in" : "Create account"}
                 </Button>
               </TabsContent>

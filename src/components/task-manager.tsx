@@ -75,10 +75,7 @@ export function TaskManager() {
     "wa.task-categories",
     DEFAULT_CATEGORIES,
   );
-  const [members, setMembers] = useLocalStorage<string[]>(
-    "wa.task-members",
-    DEFAULT_MEMBERS,
-  );
+  const [members, setMembers] = useLocalStorage<string[]>("wa.task-members", DEFAULT_MEMBERS);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState(categories[0] ?? "Work");
   const [assignee, setAssignee] = useState<string>(UNASSIGNED);
@@ -115,17 +112,11 @@ export function TaskManager() {
 
   const reassign = (id: string, value: string) =>
     setTasks(
-      tasks.map((t) =>
-        t.id === id
-          ? { ...t, assignee: value === UNASSIGNED ? null : value }
-          : t,
-      ),
+      tasks.map((t) => (t.id === id ? { ...t, assignee: value === UNASSIGNED ? null : value } : t)),
     );
 
   const setDue = (id: string, value: string) =>
-    setTasks(
-      tasks.map((t) => (t.id === id ? { ...t, dueDate: value || null } : t)),
-    );
+    setTasks(tasks.map((t) => (t.id === id ? { ...t, dueDate: value || null } : t)));
 
   const addCategory = () => {
     const c = newCategory.trim();
@@ -144,9 +135,7 @@ export function TaskManager() {
 
   const removeMember = (m: string) => {
     setMembers(members.filter((x) => x !== m));
-    setTasks(
-      tasks.map((t) => (t.assignee === m ? { ...t, assignee: null } : t)),
-    );
+    setTasks(tasks.map((t) => (t.assignee === m ? { ...t, assignee: null } : t)));
     if (activeMember === m) setActiveMember("All");
     if (assignee === m) setAssignee(UNASSIGNED);
   };
@@ -167,9 +156,7 @@ export function TaskManager() {
   const stats = useMemo(() => {
     const total = tasks.length;
     const done = tasks.filter((t) => t.done).length;
-    const overdue = tasks.filter(
-      (t) => !t.done && dueStatus(t.dueDate ?? null).overdue,
-    ).length;
+    const overdue = tasks.filter((t) => !t.done && dueStatus(t.dueDate ?? null).overdue).length;
     return { total, done, active: total - done, overdue };
   }, [tasks]);
 
@@ -252,7 +239,6 @@ export function TaskManager() {
           </Button>
         </div>
       </div>
-
 
       {/* Categories */}
       <div className="flex flex-wrap items-center gap-2">
@@ -371,89 +357,83 @@ export function TaskManager() {
           const showOverdue = due.overdue && !t.done;
           const showSoon = due.soon && !t.done;
           return (
-          <li
-            key={t.id}
-            className={cn(
-              "flex items-center gap-3 rounded-lg border border-border bg-background/40 px-3 py-2.5 group transition-colors",
-              t.done && "opacity-60",
-              showOverdue && "border-destructive/50 bg-destructive/5",
-            )}
-          >
-            <Checkbox
-              checked={t.done}
-              onCheckedChange={() => toggle(t.id)}
-              aria-label={`Mark ${t.title} complete`}
-            />
-            <span
+            <li
+              key={t.id}
               className={cn(
-                "flex-1 text-sm",
-                t.done && "line-through text-muted-foreground",
+                "flex items-center gap-3 rounded-lg border border-border bg-background/40 px-3 py-2.5 group transition-colors",
+                t.done && "opacity-60",
+                showOverdue && "border-destructive/50 bg-destructive/5",
               )}
             >
-              {t.title}
-            </span>
-            <label
-              className={cn(
-                "relative inline-flex items-center gap-1 h-7 rounded-md border border-dashed border-border px-2 text-xs cursor-pointer hover:bg-muted/50 transition-colors",
-                showOverdue &&
-                  "border-destructive/60 text-destructive bg-destructive/10 hover:bg-destructive/15",
-                showSoon && "border-amber-500/50 text-amber-500",
-              )}
-              aria-label="Due date"
-            >
-              {showOverdue ? (
-                <AlertCircle className="h-3.5 w-3.5" />
-              ) : (
-                <Calendar className="h-3.5 w-3.5" />
-              )}
-              <span>{due.label ?? "No due date"}</span>
-              <input
-                type="date"
-                value={t.dueDate ?? ""}
-                onChange={(e) => setDue(t.id, e.target.value)}
-                className="absolute inset-0 opacity-0 cursor-pointer"
+              <Checkbox
+                checked={t.done}
+                onCheckedChange={() => toggle(t.id)}
+                aria-label={`Mark ${t.title} complete`}
               />
-            </label>
-            <Select
-              value={t.assignee ?? UNASSIGNED}
-              onValueChange={(v) => reassign(t.id, v)}
-            >
-              <SelectTrigger
-                className="h-7 w-auto gap-1.5 border-dashed text-xs px-2"
-                aria-label="Assignee"
+              <span
+                className={cn("flex-1 text-sm", t.done && "line-through text-muted-foreground")}
               >
-                {t.assignee ? (
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
-                      {initials(t.assignee)}
-                    </span>
-                    {t.assignee}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">Unassigned</span>
+                {t.title}
+              </span>
+              <label
+                className={cn(
+                  "relative inline-flex items-center gap-1 h-7 rounded-md border border-dashed border-border px-2 text-xs cursor-pointer hover:bg-muted/50 transition-colors",
+                  showOverdue &&
+                    "border-destructive/60 text-destructive bg-destructive/10 hover:bg-destructive/15",
+                  showSoon && "border-amber-500/50 text-amber-500",
                 )}
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                {members.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Badge variant="secondary" className="text-xs">
-              {t.category}
-            </Badge>
-            <button
-              onClick={() => remove(t.id)}
-              className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
-              aria-label="Delete task"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-            {t.done && <Check className="h-4 w-4 text-green-400 sr-only" />}
-          </li>
+                aria-label="Due date"
+              >
+                {showOverdue ? (
+                  <AlertCircle className="h-3.5 w-3.5" />
+                ) : (
+                  <Calendar className="h-3.5 w-3.5" />
+                )}
+                <span>{due.label ?? "No due date"}</span>
+                <input
+                  type="date"
+                  value={t.dueDate ?? ""}
+                  onChange={(e) => setDue(t.id, e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </label>
+              <Select value={t.assignee ?? UNASSIGNED} onValueChange={(v) => reassign(t.id, v)}>
+                <SelectTrigger
+                  className="h-7 w-auto gap-1.5 border-dashed text-xs px-2"
+                  aria-label="Assignee"
+                >
+                  {t.assignee ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
+                        {initials(t.assignee)}
+                      </span>
+                      {t.assignee}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">Unassigned</span>
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                  {members.map((m) => (
+                    <SelectItem key={m} value={m}>
+                      {m}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Badge variant="secondary" className="text-xs">
+                {t.category}
+              </Badge>
+              <button
+                onClick={() => remove(t.id)}
+                className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                aria-label="Delete task"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+              {t.done && <Check className="h-4 w-4 text-green-400 sr-only" />}
+            </li>
           );
         })}
       </ul>

@@ -25,11 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AiDisclaimer } from "@/components/ai-disclaimer";
 import { MicButton } from "@/components/mic-button";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -111,14 +107,10 @@ const FORMATTING_LABEL: Record<Formatting, string> = {
 };
 
 export function Translator() {
-  const [projects, setProjects] = useLocalStorage<Project[]>(
-    "wpa:translate:projects",
-    [makeProject("Default")],
-  );
-  const [activeId, setActiveId] = useLocalStorage<string>(
-    "wpa:translate:active",
-    "",
-  );
+  const [projects, setProjects] = useLocalStorage<Project[]>("wpa:translate:projects", [
+    makeProject("Default"),
+  ]);
+  const [activeId, setActiveId] = useLocalStorage<string>("wpa:translate:active", "");
 
   // Ensure there's always at least one project + a valid active id.
   useEffect(() => {
@@ -133,14 +125,11 @@ export function Translator() {
     }
   }, [projects, activeId, setProjects, setActiveId]);
 
-  const active =
-    projects.find((p) => p.id === activeId) ?? projects[0] ?? makeProject("Default");
+  const active = projects.find((p) => p.id === activeId) ?? projects[0] ?? makeProject("Default");
 
   const updateActive = (patch: Partial<Project>) => {
     setProjects((list) =>
-      list.map((p) =>
-        p.id === active.id ? { ...p, ...patch, updatedAt: Date.now() } : p,
-      ),
+      list.map((p) => (p.id === active.id ? { ...p, ...patch, updatedAt: Date.now() } : p)),
     );
   };
 
@@ -220,8 +209,7 @@ export function Translator() {
 
   const charCount = active.input.length;
   const summary = useMemo(
-    () =>
-      `${active.targetLanguage} · ${active.tone} · ${FORMATTING_LABEL[active.formatting]}`,
+    () => `${active.targetLanguage} · ${active.tone} · ${FORMATTING_LABEL[active.formatting]}`,
     [active.targetLanguage, active.tone, active.formatting],
   );
 
@@ -259,9 +247,7 @@ export function Translator() {
               </PopoverTrigger>
               <PopoverContent className="w-64 p-3">
                 <div className="space-y-2">
-                  <label className="text-xs text-muted-foreground">
-                    Rename project
-                  </label>
+                  <label className="text-xs text-muted-foreground">Rename project</label>
                   <Input
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
@@ -332,10 +318,7 @@ export function Translator() {
                 ))}
               </SelectContent>
             </Select>
-            <Select
-              value={active.tone}
-              onValueChange={(v) => updateActive({ tone: v as Tone })}
-            >
+            <Select value={active.tone} onValueChange={(v) => updateActive({ tone: v as Tone })}>
               <SelectTrigger className="h-9 w-[140px]" aria-label="Tone">
                 <SelectValue placeholder="Tone" />
               </SelectTrigger>

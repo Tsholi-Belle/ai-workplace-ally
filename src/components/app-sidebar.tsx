@@ -1,5 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, FileText, ListChecks, Search, Laptop, Languages, Video, LogIn, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileText,
+  ListChecks,
+  Search,
+  Laptop,
+  Languages,
+  Video,
+  LogIn,
+  LogOut,
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Sidebar,
@@ -14,7 +26,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
+import { signOut } from "firebase/auth";
+import { auth } from "@/integrations/firebase/client";
 
 const items = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -30,9 +43,12 @@ export function AppSidebar() {
   const { user } = useAuth();
 
   async function handleSignOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) toast.error(error.message);
-    else toast.success("Signed out");
+    try {
+      await signOut(auth);
+      toast.success("Signed out");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to sign out");
+    }
   }
 
   return (
@@ -44,7 +60,9 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-display text-sm font-semibold leading-tight">Workplace Ally</span>
-            <span className="text-xs text-muted-foreground leading-tight">AI for professionals</span>
+            <span className="text-xs text-muted-foreground leading-tight">
+              AI for professionals
+            </span>
           </div>
         </Link>
       </SidebarHeader>
@@ -66,10 +84,37 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
         <SidebarGroup>
-          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupLabel>Account & Compliance</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/settings"}
+                  tooltip="Privacy & Settings"
+                >
+                  <Link to="/settings">
+                    <Settings className="h-4 w-4" />
+                    <span>Privacy & Settings</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/privacy"}
+                  tooltip="POPIA Privacy Notice"
+                >
+                  <Link to="/privacy">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>POPIA Compliance</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
               {user ? (
                 <SidebarMenuItem>
                   <SidebarMenuButton onClick={handleSignOut} tooltip={user.email ?? "Sign out"}>
@@ -92,7 +137,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-3 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-        AI outputs may be inaccurate. Always review before sharing.
+        POPIA Compliant · AI outputs may be inaccurate. Always review before sharing.
       </SidebarFooter>
     </Sidebar>
   );
