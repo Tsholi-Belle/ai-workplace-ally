@@ -15,14 +15,13 @@ fi
 
 REGION=${GCP_REGION:-"europe-west1"}
 SERVICE_NAME="ai-workplace-ally"
-IMAGE_TAG="gcr.io/${PROJECT_ID}/${SERVICE_NAME}:latest"
 
-echo "📦 1. Building and submitting image via Google Cloud Build..."
-gcloud builds submit --tag "$IMAGE_TAG"
+echo "🔧 1. Enabling required Google Cloud APIs (Cloud Run, Cloud Build, Artifact Registry)..."
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com storage.googleapis.com || true
 
-echo "🚢 2. Deploying service to Google Cloud Run in region ${REGION}..."
+echo "🚢 2. Building and deploying directly to Google Cloud Run in region ${REGION}..."
 gcloud run deploy "$SERVICE_NAME" \
-  --image "$IMAGE_TAG" \
+  --source . \
   --platform managed \
   --region "$REGION" \
   --allow-unauthenticated \
@@ -32,4 +31,4 @@ gcloud run deploy "$SERVICE_NAME" \
   --cpu 1 \
   --port 8080
 
-echo "✅ Deployment complete! Service is running on Google Cloud Run."
+echo "✅ Deployment complete! Your service is running live on Google Cloud Run."
