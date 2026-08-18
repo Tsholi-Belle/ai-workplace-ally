@@ -127,14 +127,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
-  const themeInitScript = `(function(){try{var s=localStorage.getItem('theme');var t=s==='light'||s==='dark'?s:(window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');var r=document.documentElement;r.classList.toggle('dark',t==='dark');r.classList.toggle('light',t==='light');r.style.colorScheme=t;}catch(e){}})();`;
+  const themeInitScript = `(function(){try{var s=localStorage.getItem('theme');var isDark=s==='dark'||(s!=='light'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;r.classList.toggle('dark',isDark);r.classList.toggle('light',!isDark);r.style.colorScheme=isDark?'dark':'light';}catch(e){}})();`;
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body>
+      <body className="bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary min-h-screen">
         {children}
         <Scripts />
       </body>
@@ -144,7 +144,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -165,7 +165,7 @@ function RootComponent() {
             </main>
           </div>
         </div>
-        <Toaster richColors theme={theme} position="top-right" />
+        <Toaster richColors theme={resolvedTheme} position="top-right" />
         <PopiaConsentBanner />
       </SidebarProvider>
     </QueryClientProvider>
