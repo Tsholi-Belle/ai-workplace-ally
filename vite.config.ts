@@ -11,7 +11,19 @@ export default defineConfig({
   },
   vite: {
     build: {
-      chunkSizeWarningLimit: 2500,
+      chunkSizeWarningLimit: 4000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules/jspdf") || id.includes("node_modules/html2canvas") || id.includes("node_modules/canvg")) {
+              return "vendor-pdf";
+            }
+            if (id.includes("node_modules/firebase") || id.includes("node_modules/@firebase")) {
+              return "vendor-firebase";
+            }
+          },
+        },
+      },
     },
   },
 });
